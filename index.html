@@ -5254,10 +5254,29 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
       if (error) { toast("Error al aceptar la pareja: "+error.message, "err"); return; }
       notifyGroupActivity([req.requester_id], "tournament_partner_response",
         getName(user.id)+" ha aceptado tu propuesta de pareja para el torneo \""+reqTName+"\".");
+      sendPush(req.requester_id, "Pareja apuntada al torneo",
+        `"${getName(user.id)}" ha aceptado tu propuesta para jugar como pareja en el torneo "${reqTName}" del grupo "${group.name}". Por tanto, ya estáis apuntados al torneo ✍🏻`, "/");
+
+      // Si alguien más había propuesto pareja a cualquiera de los dos y se ha quedado sin respuesta
+      // (porque uno de ellos ha aceptado formar pareja con otra persona), le avisamos.
+      var staleRes = await sb.from("tournament_partner_requests").select("*")
+        .eq("tournament_id", req.tournament_id).neq("id", req.id)
+        .in("target_id", [user.id, req.requester_id]);
+      var stale = (staleRes.data||[]).filter(function(r){ return r.requester_id!==user.id && r.requester_id!==req.requester_id; });
+      for (var i=0;i<stale.length;i++){
+        var s = stale[i];
+        var targetName = s.target_id===user.id ? getName(user.id) : getName(req.requester_id);
+        var newPartnerName = s.target_id===user.id ? getName(req.requester_id) : getName(user.id);
+        sendPush(s.requester_id, "Propuesta de pareja no respondida",
+          `"${targetName}", a quien habías propuesto jugar como pareja el torneo "${reqTName}" del grupo "${group.name}", se ha apuntado al torneo con "${newPartnerName}". ¡Busca otra pareja y apúntate al torneo!`, "/");
+        await sb.from("tournament_partner_requests").delete().eq("id", s.id);
+      }
     } else {
       await sb.from("tournament_partner_requests").delete().eq("id", req.id);
       notifyGroupActivity([req.requester_id], "tournament_partner_response",
         getName(user.id)+" ha rechazado tu propuesta de pareja para el torneo \""+reqTName+"\".");
+      sendPush(req.requester_id, "Propuesta de pareja rechazada",
+        `"${getName(user.id)}" ha rechazado tu propuesta para jugar como pareja en el torneo "${reqTName}" del grupo "${group.name}". ¡Busca otra pareja y apúntate al torneo!`, "/");
     }
   };
 
@@ -5270,6 +5289,8 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
     else if (partnerId) {
       notifyGroupActivity([partnerId], "tournament_partner_dissolved",
         getName(user.id)+" ha disuelto la pareja que habíais formado para el torneo \""+t.name+"\". Ahora mismo no tienes pareja para este torneo.");
+      sendPush(partnerId, "Disolución de pareja",
+        `"${getName(user.id)}" ha decidido disolver la pareja que habíais formado para el torneo "${t.name}" del grupo "${group.name}", por lo que ahora mismo no estás apuntado al torneo. 💔`, "/");
     }
     setShowUnpairConfirm(null);
   };
