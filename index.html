@@ -5367,6 +5367,9 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
     await sb.from("tournaments").update({ tstatus:"in_progress", started_at:startedAtNow }).eq("id", t.id);
     setTournaments(function(prev){ return prev.map(function(x){ return x.id===t.id ? Object.assign({},x,{tstatus:"in_progress",started_at:startedAtNow}) : x; }); });
     setOpenTournament(function(prev){ return prev && prev.id===t.id ? Object.assign({},prev,{tstatus:"in_progress",started_at:startedAtNow}) : prev; });
+    var registeredIds = pairs.reduce(function(acc,p){ return acc.concat(p); }, []);
+    sendPush(registeredIds, "Torneo comenzado",
+      `"${getName(user.id)}" (Administrador del torneo) ha dado comienzo al torneo "${t.name}" del grupo "${group.name}".`, "/");
     setBusy(false);
     if (!silent) toast("Torneo comenzado 🏆");
   };
