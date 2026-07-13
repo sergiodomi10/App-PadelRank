@@ -289,14 +289,14 @@ const CHAT_ICON_SRC = "data:image/webp;base64,UklGRogFAABXRUJQVlA4WAoAAAAQAAAAPw
 const ToastCtx = createContext(null);
 function ToastProvider({ children }) {
   const [toast, setToast] = useState(null);
-  const show = useCallback((msg, type="ok") => {
-    setToast({ msg, type });
+  const show = useCallback((msg, type="ok", textColor) => {
+    setToast({ msg, type, textColor });
     setTimeout(() => setToast(null), 3000);
   }, []);
   return html`<${ToastCtx.Provider} value=${show}>
     ${children}
     ${toast && html`<div style=${{ position:"fixed", bottom:28, left:"50%", transform:"translateX(-50%)",
-      background:toast.type==="err"?C.lose:C.accent, color:"#000", padding:"10px 20px",
+      background:toast.type==="err"?C.lose:C.accent, color:toast.textColor||"#000", padding:"10px 20px",
       borderRadius:12, fontWeight:700, fontSize:13, zIndex:300, whiteSpace:"nowrap",
       boxShadow:"0 4px 24px #00000060", animation:"fadeUp 0.2s ease" }}>${toast.msg}</div>`}
   <//>`;
@@ -1429,7 +1429,8 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
       await sb.from("matches").update({status:"approved", approved_at:new Date().toISOString()}).eq("id",n.id);
       await applyMatchStats(n.id,n.group_id,n.pair1,n.pair2,n.winner,n.set_scores);
       notifyIfNewLeader(n.allPids, n.group_id, leadersBefore);
-      sendPush(n.allPids, "Partido registrado",
+      var othersOnApprove = n.allPids.filter(function(pid){ return pid!==user.id; });
+      sendPush(othersOnApprove, "Partido registrado",
         `Los 4 jugadores del partido de "${n.p1a}"/"${n.p1b}" vs "${n.p2a}"/"${n.p2b}", con resultado de "${n.setsStr}", habéis aprobado el partido. Por tanto, el partido ha sido registrado. ✅`, "/");
       toast("Partido aprobado y registrado ✔️");
     }
@@ -1442,8 +1443,10 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
     await sb.from("matches").update({status:"rejected", rejected_at:new Date().toISOString()}).eq("id",n.id);
     var rejProf = await sb.from("profiles").select("name").eq("id",user.id).maybeSingle();
     var rejName = (rejProf.data && rejProf.data.name) || "?";
-    sendPush(n.allPids, "Partido rechazado",
+    var othersOnReject = n.allPids.filter(function(pid){ return pid!==user.id; });
+    sendPush(othersOnReject, "Partido rechazado",
       `"${rejName}" ha rechazado el registro del partido de "${n.p1a}"/"${n.p1b}" vs "${n.p2a}"/"${n.p2b}", con resultado de "${n.setsStr}". Por tanto, el partido no ha sido registrado. ❌`, "/");
+    toast("Partido no registrado ❌", "ok", C.lose);
     setRejState("ok"); setBusy(null);
     setTimeout(function(){
       setRejId(null); setRejText(""); setRejState(null);
@@ -2041,7 +2044,7 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
                       <button onClick=${function(){ setRejId(null); setRejText(""); setRejState(null); }}
                         style=${{ flex:1, padding:"9px", background:C.lose+"18",
                           border:"1px solid "+C.lose+"55", borderRadius:10,
-                          color:"#fff", fontSize:13, cursor:"pointer" }}>← Volver</button>
+                          color:C.lose, fontSize:13, cursor:"pointer" }}>← Volver</button>
                       <button onClick=${function(){ confirmReject(n); }} disabled=${busy===n.id}
                         style=${{ flex:1, padding:"9px", background:C.win+"18",
                           border:"1px solid "+C.win+"55", borderRadius:10,
@@ -8959,7 +8962,7 @@ function NewMatchTab({ members, user, onSubmit, isAdmin, scoring, onSaveScoring 
 
   const SetInput = ({si, label}) => {
     const invalid = setInvalid(si);
-    const borderCol = invalid ? C.lose : C.text+"88";
+    const borderCol = invalid ? C.lose : "#fff";
     const g1 = setScores[si].p1, g2 = setScores[si].p2;
     return html`<div style=${{ marginBottom:12 }}>
       <${SLabel}>${label}<//>
@@ -9042,6 +9045,12 @@ function NewMatchTab({ members, user, onSubmit, isAdmin, scoring, onSaveScoring 
           <img src=${SWAP_ICON_SRC} style=${{ width:"100%", height:"100%", objectFit:"contain" }} />
         </button>`}
       </div>
+      ${!isAdmin && html`<div style=${{ display:"flex", alignItems:"flex-start", gap:6, marginBottom:8 }}>
+        <span style=${{ width:14, height:14, borderRadius:"50%", background:"#2563eb",
+          color:"#fff", fontSize:9, fontWeight:800, display:"flex", alignItems:"center",
+          justifyContent:"center", flexShrink:0, marginTop:1 }}>i</span>
+        <span style=${{ color:"#fff", fontSize:11, lineHeight:1.4 }}>El Sistema de Puntuación puede modificarse, pero únicamente lo puede hacer el Administrador del grupo</span>
+      </div>`}
       <div style=${{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px 12px" }}>
         ${[["Victoria 2-0",scoring.w20,"win"],["Victoria 2-1",scoring.w21,"win"],
            ["Derrota 1-2",scoring.l12,"lose"],["Derrota 0-2",scoring.l02,"lose"]]
@@ -9501,6 +9510,7 @@ function PairPicker({ label, pair, avail, onChange, offset=0 }) {
         value=${pair[i]}
         options=${avail(i)}
         onChange=${v => onChange(i, v)}
+        borderColor="#fff" listBorderColor="#fff"
         placeholder=${"Jugador "+(i+1+offset)} />`)}
     </div>
   </div>`;
