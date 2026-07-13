@@ -5130,6 +5130,8 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
       var allMemberIds = (members||[]).map(function(m){return m.id;});
       notifyGroupActivity(allMemberIds, "tournament_created",
         getName(user.id)+" ha creado un torneo de "+FORMAT_LABELS[tFormat]+": \""+tName.trim()+"\".");
+      sendPush(allMemberIds, "Nuevo torneo creado",
+        `"${getName(user.id)}" (Administrador del grupo) ha creado un nuevo torneo en el grupo "${group.name}".`, "/");
       if (tAdminId && tAdminId!==user.id) {
         notifyGroupActivity([tAdminId], "tournament_admin_assigned",
           getName(user.id)+" te ha nombrado Administrador del torneo \""+tName.trim()+"\".");
