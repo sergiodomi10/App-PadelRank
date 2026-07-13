@@ -5601,6 +5601,9 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
       notifyGroupActivity([newAdminId], "tournament_admin_assigned",
         getName(user.id)+" te ha nombrado Administrador del torneo \""+t.name+"\".");
     }
+    var allMemberIds = (members||[]).map(function(m){return m.id;});
+    sendPush(allMemberIds, "Cambio de Admin del torneo",
+      `"${getName(user.id)}" (Admin del torneo "${t.name}") ha cedido el puesto de Admin del torneo a "${getName(newAdminId)}". 🔄`, "/");
   };
 
   const getChampionPairs = (t) => {
@@ -7311,7 +7314,7 @@ function GroupScreen({ group, user, profile, onBack }) {
     await notifyOthers("admin_changed", profile.name+" ha elegido a "+changeTarget.name+" como nuevo Administrador del grupo");
     var allMemberIds = (members||[]).map(function(m){return m.id;});
     sendPush(allMemberIds, "Cambio de Admin del grupo",
-      `"${profile.name}" (Admin del grupo) ha cedido el puesto de Admin del grupo "${group.name}" a "${changeTarget.name}". 🔄`, "/");
+      `"${profile.name}" (Admin del grupo "${group.name}") ha cedido el puesto de Admin del grupo a "${changeTarget.name}". 🔄`, "/");
     setChangeTarget(null); setAdminMenuStage(0);
     await loadData();
   };
