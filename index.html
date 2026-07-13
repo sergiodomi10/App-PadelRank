@@ -146,6 +146,20 @@ const SUPABASE_URL = "https://mxqeuubbuesyzwzpgmbi.supabase.co";
 const SUPABASE_KEY = "sb_publishable_cGpQolKm55Gw7tlA0Wussw_hQsvyFvd";
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Envía una notificación push a un usuario (o a varios) llamando a la Edge Function.
+// userIds puede ser un único id (string) o un array de ids.
+// No lanza error si falla: las notificaciones nunca deben romper la acción principal del usuario.
+async function sendPush(userIds, title, body, url) {
+  const ids = Array.isArray(userIds) ? userIds : [userIds];
+  await Promise.allSettled(ids.filter(Boolean).map(uid =>
+    fetch(`${SUPABASE_URL}/functions/v1/send-notification`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_KEY}` },
+      body: JSON.stringify({ user_id: uid, title, body: body || "", url: url || "/" }),
+    }).catch(() => {})
+  ));
+}
+
 const C = { bg:"#09090b", card:"#18181b", card2:"#1e1e21", border:"#27272a",
   accent:"#a3e635", text:"#f4f4f5", muted:"#71717a", win:"#4ade80", lose:"#f87171", warn:"#fb923c" };
 const MEDAL = ["🥇","🥈","🥉"];
@@ -7120,6 +7134,9 @@ function GroupScreen({ group, user, profile, onBack }) {
     if (error||!match) { toast("Error al guardar el partido","err"); return; }
     await sb.from("match_votes").insert({match_id:match.id,user_id:user.id,vote:"approve"});
     toast("✓ Notificación enviada. Registro pendiente de aprobación.");
+    const otherPlayers = [...pair1, ...pair2].filter(uid => uid !== user.id);
+    sendPush(otherPlayers, "🎾 Nuevo partido por aprobar",
+      `${profile.name} ha añadido un partido en ${group.name}. Necesita tu aprobación.`, "/");
     await loadData();
   };
 
