@@ -2504,8 +2504,8 @@ function HomeScreen({ user, profile, onSelect, openHidden }) {
           disabled=${pushStatus === "busy" || pushStatus === "checking"}
           onClick=${e => { e.stopPropagation(); pushStatus === "on" ? disablePush() : enablePush(); }}
           style=${{
-            background:"none", border:"1px solid #fff", textAlign:"left",
-            borderRadius:10, color:C.text, fontSize:14, fontWeight:600, padding:"14px 16px",
+            background:"none", border:`1px solid ${pushStatus === "on" ? C.lose : C.win}`, textAlign:"left",
+            borderRadius:10, color: pushStatus === "on" ? C.lose : C.win, fontSize:14, fontWeight:600, padding:"14px 16px",
             cursor: (pushStatus === "busy" || pushStatus === "checking") ? "default" : "pointer",
             opacity: (pushStatus === "busy" || pushStatus === "checking") ? 0.6 : 1,
             display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
@@ -3769,6 +3769,13 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
         await sb.from("group_chat_match_notifications").insert(rows);
         await sb.from("group_chat_messages").update({ proposal_notified:true }).eq("id", m.id);
         setMsgs(prev => prev.map(x=>x.id===m.id ? Object.assign({},x,{proposal_notified:true}) : x));
+        var formedUids = joinsNow.slice(0,4).map(function(j){return j.user_id;});
+        formedUids.forEach(function(uid){
+          var others = formedUids.filter(function(x){return x!==uid;}).map(function(x){return getName(x);});
+          var othersStr = others.length<=1 ? `"${others[0]||""}"` : `"${others.slice(0,-1).join('", "')}" y "${others[others.length-1]}"`;
+          sendPush(uid, "Partido formado",
+            `Se ha formado un partido para el "${fmtDDMMYYYY(m.proposal_date)}" a las "${m.proposal_time}". Los demás jugadores apuntados son: ${othersStr}. ¡Suerte para el partido! 💪🏻`, "/");
+        });
       }
     }
   };
