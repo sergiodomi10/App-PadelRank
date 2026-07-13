@@ -5224,6 +5224,8 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
     await sb.from("tournament_partner_requests").insert({ tournament_id:t.id, requester_id:user.id, target_id:targetId, status:"pending" });
     notifyGroupActivity([targetId], "tournament_partner_request",
       getName(user.id)+" te ha propuesto ser tu pareja para el torneo \""+t.name+"\".");
+    sendPush(targetId, "Propuesta de pareja",
+      `"${getName(user.id)}" te ha propuesto jugar juntos el torneo "${t.name}" del grupo "${group.name}". ¡Decide y dale una respuesta! 👥`, "/");
     setShowPairFor(null);
   };
 
@@ -8369,9 +8371,16 @@ function RankingTab({ groupId, ranked, allMatches, members, isAdmin, user, onPla
   const confirmRemoveMember = async function(){
     if (removeConfirmText !== "Eliminar usuario del grupo" || !removeConfirmFor) return;
     setRemoveBusy(true);
+    var removedUser = removeConfirmFor;
     const { error } = await sb.rpc("remove_group_member", { p_group_id: groupId, p_target_user: removeConfirmFor.id });
     setRemoveBusy(false);
     if (error) { alert("Error al eliminar al usuario: "+error.message); return; }
+    var adminMember = members.find(function(m){return m.id===user.id;});
+    var adminName = adminMember ? adminMember.name : "?";
+    var gres = await sb.from("groups").select("name").eq("id", groupId).maybeSingle();
+    var gname = (gres.data && gres.data.name) || "?";
+    sendPush(removedUser.id, "Eliminación de un grupo",
+      `"${adminName}" (Administrador del grupo) te ha eliminado del grupo "${gname}".`, "/");
     setRemoveConfirmFor(null); setRemoveConfirmText("");
   };
 
