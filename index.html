@@ -7295,9 +7295,13 @@ function GroupScreen({ group, user, profile, onBack }) {
   const saveGroupName = async () => {
     var nm = newGroupNameInput.trim();
     if (!nm || nm===group.name) { setEditingGroupName(false); return; }
+    var oldName = group.name;
     await sb.from("groups").update({ name: nm }).eq("id", group.id);
     setGroupNameObj(nm);
-    await notifyOthers("name_changed", profile.name+' ha cambiado el nombre del grupo de "'+group.name+'" a "'+nm+'"');
+    await notifyOthers("name_changed", profile.name+' ha cambiado el nombre del grupo de "'+oldName+'" a "'+nm+'"');
+    var allMemberIds = (members||[]).map(function(m){return m.id;});
+    sendPush(allMemberIds, "Cambio de Nombre del grupo",
+      `"${profile.name}" (Administrador del grupo) ha cambiado el nombre del grupo "${oldName}" a "${nm}". 🔄`, "/");
     setEditingGroupName(false);
   };
 
