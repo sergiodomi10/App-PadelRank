@@ -1429,6 +1429,8 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
       await sb.from("matches").update({status:"approved", approved_at:new Date().toISOString()}).eq("id",n.id);
       await applyMatchStats(n.id,n.group_id,n.pair1,n.pair2,n.winner,n.set_scores);
       notifyIfNewLeader(n.allPids, n.group_id, leadersBefore);
+      sendPush(n.allPids, "Partido registrado",
+        `Los 4 jugadores del partido de "${n.p1a}"/"${n.p1b}" vs "${n.p2a}"/"${n.p2b}", con resultado de "${n.setsStr}", habéis aprobado el partido. Por tanto, el partido ha sido registrado. ✅`, "/");
       toast("Partido aprobado y registrado ✔️");
     }
     setBusy(null); load();
@@ -1438,6 +1440,10 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
     setBusy(n.id);
     await sb.from("match_votes").upsert({match_id:n.id, user_id:user.id, vote:"reject"},{onConflict:"match_id,user_id"});
     await sb.from("matches").update({status:"rejected", rejected_at:new Date().toISOString()}).eq("id",n.id);
+    var rejProf = await sb.from("profiles").select("name").eq("id",user.id).maybeSingle();
+    var rejName = (rejProf.data && rejProf.data.name) || "?";
+    sendPush(n.allPids, "Partido rechazado",
+      `"${rejName}" ha rechazado el registro del partido de "${n.p1a}"/"${n.p1b}" vs "${n.p2a}"/"${n.p2b}", con resultado de "${n.setsStr}". Por tanto, el partido no ha sido registrado. ❌`, "/");
     setRejState("ok"); setBusy(null);
     setTimeout(function(){
       setRejId(null); setRejText(""); setRejState(null);
@@ -1462,10 +1468,10 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
     var hv = await sb.from("history_deletion_votes").select("*").eq("deletion_id",n.id);
     var ap = (hv.data||[]).filter(function(x){return x.vote==="approve";}).length;
     var rj = (hv.data||[]).filter(function(x){return x.vote==="reject";}).length;
+    var { data:gms } = await sb.from("group_members").select("user_id").eq("group_id",n.group_id);
+    var memberIds = (gms||[]).map(function(g){return g.user_id;});
     if (ap >= n.approveNeeded) {
       await sb.from("history_deletions").update({status:"approved", resolved_at:new Date().toISOString()}).eq("id",n.id);
-      var { data:gms } = await sb.from("group_members").select("user_id").eq("group_id",n.group_id);
-      var memberIds = (gms||[]).map(function(g){return g.user_id;});
       await sb.from("matches").delete().eq("group_id",n.group_id);
       if(memberIds.length){
         await sb.from("player_stats").update({
@@ -1473,9 +1479,13 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
           games_won:0,games_lost:0,best_streak:0,worst_streak:0
         }).eq("group_id",n.group_id).in("user_id",memberIds);
       }
+      sendPush(memberIds, "Historial de partidos eliminado",
+        "La votación para la eliminación del historial de partidos ha resultado ser aprobada. Por tanto, el historial de partidos ha sido eliminado.", "/");
       toast("Historial eliminado 🗑️");
     } else if (rj >= n.rejectNeeded) {
       await sb.from("history_deletions").update({status:"rejected", resolved_at:new Date().toISOString()}).eq("id",n.id);
+      sendPush(memberIds, "Historial de partidos no eliminado",
+        "La votación para la eliminación del historial de partidos ha resultado ser rechazada. Por tanto, el historial de partidos no ha sido eliminado.", "/");
     }
     setBusy(null); load();
   };
@@ -1495,12 +1505,18 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
     var cv = await sb.from("group_chat_deletion_votes").select("*").eq("deletion_id",n.id);
     var ap = (cv.data||[]).filter(function(x){return x.vote==="approve";}).length;
     var rj = (cv.data||[]).filter(function(x){return x.vote==="reject";}).length;
+    var { data:gms2 } = await sb.from("group_members").select("user_id").eq("group_id",n.group_id);
+    var memberIds2 = (gms2||[]).map(function(g){return g.user_id;});
     if (ap >= n.approveNeeded) {
       await sb.from("group_chat_deletions").update({status:"approved", resolved_at:new Date().toISOString()}).eq("id",n.id);
       await sb.from("group_chat_messages").delete().eq("group_id",n.group_id);
+      sendPush(memberIds2, "Mensajes del chat eliminados",
+        "La votación para la eliminación de los mensajes del chat ha resultado ser aprobada. Por tanto, todos los mensajes del chat han sido eliminados.", "/");
       toast("Mensajes del chat eliminados 🗑️");
     } else if (rj >= n.rejectNeeded) {
       await sb.from("group_chat_deletions").update({status:"rejected", resolved_at:new Date().toISOString()}).eq("id",n.id);
+      sendPush(memberIds2, "Mensajes del chat no eliminados",
+        "La votación para la eliminación de los mensajes del chat ha resultado ser rechazada. Por tanto, todos los mensajes del chat no han sido eliminados.", "/");
     }
     setBusy(null); load();
   };
