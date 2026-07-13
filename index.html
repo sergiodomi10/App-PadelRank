@@ -7309,6 +7309,9 @@ function GroupScreen({ group, user, profile, onBack }) {
     const { error } = await sb.rpc("change_group_admin", { p_group_id: group.id, p_new_admin: changeTarget.id });
     if (error) { toast("Error al cambiar el administrador: "+error.message, "err"); return; }
     await notifyOthers("admin_changed", profile.name+" ha elegido a "+changeTarget.name+" como nuevo Administrador del grupo");
+    var allMemberIds = (members||[]).map(function(m){return m.id;});
+    sendPush(allMemberIds, "Cambio de Admin del grupo",
+      `"${profile.name}" (Admin del grupo) ha cedido el puesto de Admin del grupo "${group.name}" a "${changeTarget.name}". 🔄`, "/");
     setChangeTarget(null); setAdminMenuStage(0);
     await loadData();
   };
