@@ -7135,8 +7135,8 @@ function GroupScreen({ group, user, profile, onBack }) {
     await sb.from("match_votes").insert({match_id:match.id,user_id:user.id,vote:"approve"});
     toast("✓ Notificación enviada. Registro pendiente de aprobación.");
     const otherPlayers = [...pair1, ...pair2].filter(uid => uid !== user.id);
-    sendPush(otherPlayers, "🎾 Nuevo partido por aprobar",
-      `${profile.name} ha añadido un partido en ${group.name}. Necesita tu aprobación.`, "/");
+    sendPush(otherPlayers, "Nuevo partido por aprobar",
+      `"${profile.name}" ha añadido un partido en el grupo "${group.name}". Necesita tu aprobación.`, "/");
     await loadData();
   };
 
