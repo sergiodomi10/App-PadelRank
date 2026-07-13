@@ -5534,6 +5534,38 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
     }
   };
 
+  const getChampionPairs = (t) => {
+    var tMatches = matches.filter(function(m){ return m.tournament_id===t.id; });
+    function finalOf(bracket) {
+      var arr = tMatches.filter(function(m){ return m.stage==="elim" && m.bracket===bracket; });
+      var maxRound = arr.reduce(function(mx,m){ return Math.max(mx, m.round||0); }, 0);
+      return arr.find(function(m){ return m.round===maxRound && m.winner; });
+    }
+    var pairs = [];
+    if (t.format==="liga") {
+      var mine = participants.filter(function(p){return p.tournament_id===t.id && p.partner_id;});
+      var pairsSet = {}; mine.forEach(function(p){ var key=[p.user_id,p.partner_id].sort().join("|"); pairsSet[key]=[p.user_id,p.partner_id]; });
+      var allPairs = Object.values(pairsSet);
+      var stats = {};
+      allPairs.forEach(function(pr){ stats[pr.join("|")] = { pair:pr, pts:0 }; });
+      tMatches.filter(function(m){ return m.stage==="liga" && m.winner; }).forEach(function(m){
+        var p1=[m.pair1_p1,m.pair1_p2].join("|"), p2=[m.pair2_p1,m.pair2_p2].join("|");
+        if (m.winner===1 && stats[p1]) stats[p1].pts+=3;
+        if (m.winner===2 && stats[p2]) stats[p2].pts+=3;
+      });
+      var sorted = Object.values(stats).sort(function(a,b){return b.pts-a.pts;});
+      if (sorted[0]) pairs.push(sorted[0].pair);
+    } else {
+      var mainFinal = finalOf("main");
+      if (mainFinal) pairs.push(mainFinal.winner===1 ? [mainFinal.pair1_p1,mainFinal.pair1_p2] : [mainFinal.pair2_p1,mainFinal.pair2_p2]);
+      if (t.has_consolation) {
+        var consFinal = finalOf("consolation");
+        if (consFinal) pairs.push(consFinal.winner===1 ? [consFinal.pair1_p1,consFinal.pair1_p2] : [consFinal.pair2_p1,consFinal.pair2_p2]);
+      }
+    }
+    return pairs;
+  };
+
   const finishTournament = async (t) => {
     setBusy(true);
     await sb.from("tournaments").update({ tstatus:"finished", finished_at: new Date().toISOString() }).eq("id", t.id);
@@ -5541,6 +5573,12 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
     var participantIds = tParts.map(function(p){return p.user_id;});
     notifyGroupActivity(participantIds, "tournament_finished",
       ""+getName(user.id)+" ha dado por finalizado el torneo \""+t.name+"\".");
+    var championPairs = getChampionPairs(t);
+    var championIds = championPairs.reduce(function(acc,p){return acc.concat(p);}, []);
+    var otherIds = participantIds.filter(function(id){ return championIds.indexOf(id)===-1; });
+    var baseMsg = `"${getName(user.id)}" (Administrador del torneo) ha dado por finalizado el torneo "${t.name}" del grupo "${group.name}".`;
+    if (championIds.length) sendPush(championIds, "Torneo finalizado", baseMsg+" Enhorabuena por el campeonato! 💪🏻👏🏻", "/");
+    if (otherIds.length) sendPush(otherIds, "Torneo finalizado", baseMsg+" A seguir!", "/");
     setBusy(false);
     setPressedFinishId(null);
     setShowFinishConfirm(null);
