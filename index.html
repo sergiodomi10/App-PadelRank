@@ -2021,14 +2021,14 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
                 </div>`
               : isConfirming
                 ? html`<div style=${{ marginTop:4 }}>
-                    <p style=${{ fontSize:12, color:C.muted, marginBottom:8, lineHeight:1.5 }}>
+                    <p style=${{ fontSize:12, color:"#fff", marginBottom:8, lineHeight:1.5 }}>
                       Escribe <strong style=${{ color:C.lose }}>"Rechazar"</strong> para confirmar:
                     </p>
                     <input type="text" value=${rejText}
                       onChange=${function(e){ setRejText(e.target.value); setRejState(null); }}
                       placeholder="Escribe aquí..."
                       style=${{ width:"100%", padding:"10px 12px", background:C.card2,
-                        border:"1px solid "+(rejState==="err"?C.lose:C.border),
+                        border:"1px solid "+(rejState==="err"?C.lose:"#fff"),
                         borderRadius:10, color:C.text, fontSize:14,
                         outline:"none", boxSizing:"border-box", marginBottom:8 }} />
                     ${rejState==="err" && html`<p style=${{ color:C.lose, fontSize:12, marginBottom:8 }}>
@@ -2039,13 +2039,13 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
                     </p>`}
                     ${rejState!=="ok" && html`<div style=${{ display:"flex", gap:8 }}>
                       <button onClick=${function(){ setRejId(null); setRejText(""); setRejState(null); }}
-                        style=${{ flex:1, padding:"9px", background:"none",
-                          border:"1px solid "+C.border, borderRadius:10,
-                          color:C.muted, fontSize:13, cursor:"pointer" }}>← Volver</button>
-                      <button onClick=${function(){ confirmReject(n); }} disabled=${busy===n.id}
                         style=${{ flex:1, padding:"9px", background:C.lose+"18",
                           border:"1px solid "+C.lose+"55", borderRadius:10,
-                          color:C.lose, fontWeight:700, fontSize:13, cursor:"pointer" }}>
+                          color:"#fff", fontSize:13, cursor:"pointer" }}>← Volver</button>
+                      <button onClick=${function(){ confirmReject(n); }} disabled=${busy===n.id}
+                        style=${{ flex:1, padding:"9px", background:C.win+"18",
+                          border:"1px solid "+C.win+"55", borderRadius:10,
+                          color:C.win, fontWeight:700, fontSize:13, cursor:"pointer" }}>
                         Confirmar rechazo
                       </button>
                     </div>`}
