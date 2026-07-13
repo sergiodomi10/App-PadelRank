@@ -1963,14 +1963,18 @@ function HomeScreen({ user, profile, onSelect, openHidden }) {
   const enablePush = async () => {
     if (pushStatus === "unsupported") return;
     setPushStatus("busy");
+    const withTimeout = (promise, ms, label) => Promise.race([
+      promise,
+      new Promise((_, rej) => setTimeout(() => rej(new Error(`Tiempo agotado esperando: ${label}`)), ms)),
+    ]);
     try {
-      const perm = await Notification.requestPermission();
+      const perm = await withTimeout(Notification.requestPermission(), 15000, "permiso de notificaciones");
       if (perm !== "granted") { setPushStatus(perm === "denied" ? "denied" : "off"); return; }
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({
+      const reg = await withTimeout(navigator.serviceWorker.ready, 10000, "service worker listo");
+      const sub = await withTimeout(reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
+      }), 15000, "suscripción push");
       const raw = sub.toJSON();
       const { error } = await sb.from("push_subscriptions").upsert({
         user_id: user.id,
