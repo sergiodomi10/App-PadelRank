@@ -9560,9 +9560,64 @@ function MountFlag() {
   return null;
 }
 
+function InstallBanner() {
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [visible, setVisible] = useState(false);
+  const [installing, setInstalling] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("padelrank_install_dismissed") === "1") return;
+    } catch (e) {}
+    const onBIP = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setVisible(true);
+    };
+    window.addEventListener("beforeinstallprompt", onBIP);
+    window.addEventListener("appinstalled", () => { setVisible(false); setDeferredPrompt(null); });
+    return () => window.removeEventListener("beforeinstallprompt", onBIP);
+  }, []);
+
+  if (!visible || !deferredPrompt) return null;
+
+  const dismiss = () => {
+    setVisible(false);
+    try { localStorage.setItem("padelrank_install_dismissed", "1"); } catch (e) {}
+  };
+
+  const install = async () => {
+    setInstalling(true);
+    try {
+      await deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+    } catch (e) {}
+    setInstalling(false);
+    setVisible(false);
+    setDeferredPrompt(null);
+  };
+
+  return html`<div style=${{ position:"fixed", left:12, right:12, bottom:16, zIndex:99999,
+    background:"#18181b", border:"1px solid #fff", borderRadius:14, padding:"12px 12px",
+    display:"flex", alignItems:"center", gap:12, boxShadow:"0 8px 32px rgba(0,0,0,0.55)" }}>
+    <img src="/icon-96.png" style=${{ width:40, height:40, borderRadius:9, objectFit:"contain", flexShrink:0 }} />
+    <div style=${{ flex:1, minWidth:0 }}>
+      <div style=${{ color:"#fff", fontWeight:800, fontSize:13.5 }}>PadelRank</div>
+      <div style=${{ color:"#a1a1aa", fontSize:11.5 }}>Instala la app para un acceso más rápido</div>
+    </div>
+    <button onClick=${dismiss} style=${{ background:"none", border:"none", color:"#a1a1aa",
+      fontSize:18, cursor:"pointer", padding:"0 4px", flexShrink:0 }}>✕</button>
+    <button onClick=${install} disabled=${installing} style=${{ background:"#a3e635", border:"none",
+      borderRadius:9, color:"#09090b", fontWeight:800, fontSize:13, padding:"9px 14px",
+      cursor:installing?"default":"pointer", flexShrink:0, whiteSpace:"nowrap" }}>
+      ${installing ? "..." : "Instalar app"}
+    </button>
+  </div>`;
+}
+
 // RENDER
 ReactDOM.createRoot(document.getElementById("root")).render(
-  html`<${ErrorBoundary}><${ToastProvider}><${MountFlag} /><${App} /><//><//>`
+  html`<${ErrorBoundary}><${ToastProvider}><${MountFlag} /><${InstallBanner} /><${App} /><//><//>`
 );
 </script>
 
