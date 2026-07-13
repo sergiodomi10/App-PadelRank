@@ -2504,15 +2504,15 @@ function HomeScreen({ user, profile, onSelect, openHidden }) {
           disabled=${pushStatus === "busy" || pushStatus === "checking"}
           onClick=${e => { e.stopPropagation(); pushStatus === "on" ? disablePush() : enablePush(); }}
           style=${{
-            background:"none", border:`1px solid ${C.border}`, textAlign:"left",
+            background:"none", border:"1px solid #fff", textAlign:"left",
             borderRadius:10, color:C.text, fontSize:14, fontWeight:600, padding:"14px 16px",
             cursor: (pushStatus === "busy" || pushStatus === "checking") ? "default" : "pointer",
             opacity: (pushStatus === "busy" || pushStatus === "checking") ? 0.6 : 1,
             display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
           <span>
             ${pushStatus === "denied" ? "Notificaciones bloqueadas (actívalas en ajustes del navegador)" :
-              pushStatus === "on" ? "Desactivar notificaciones" :
-              pushStatus === "busy" ? "Un momento..." : "Activar notificaciones"}
+              pushStatus === "on" ? "Desactivar notificaciones emergentes" :
+              pushStatus === "busy" ? "Un momento..." : "Activar notificaciones emergentes"}
           </span>
           <span>${pushStatus === "on" ? "🔔" : "🔕"}</span>
         </button>`}
@@ -3739,6 +3739,9 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
     }).select().single();
     if (error) { toast("Error al proponer el partido", "err"); return; }
     setMsgs(prev => prev.some(x=>x.id===data.id) ? prev : [...prev, data]);
+    var allMemberIds = (members||[]).map(function(m){return m.id;});
+    sendPush(allMemberIds, "Propuesta de partido",
+      `"${getName(user.id)}" ha propuesto para formar un partido para el "${fmtDDMMYYYY(proposeDate)}" a las "${proposeTime}". ¡Apúntate ya! ✍🏻`, "/");
     setShowProposeMatch(false); setProposeDate(""); setProposeTime("");
   };
 
