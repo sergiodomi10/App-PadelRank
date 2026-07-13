@@ -1004,6 +1004,61 @@ async function applyMatchStats(matchId, groupId, pair1, pair2, winner, sc) {
   await Promise.all(updates);
 }
 
+// Devuelve los ids de quienes lideran cada ranking del grupo ahora mismo.
+// "pts": ranking de Puntos Totales (solo jugadores con al menos 1 partido).
+// "avg": ranking de Promedio (PTS/PJ) (solo jugadores que califican: 10+ partidos
+// en su racha activa, sin haber estado más de 3 meses sin jugar).
+async function getRankingLeaders(groupId) {
+  var mres = await sb.from("group_members").select("user_id").eq("group_id", groupId);
+  var memberIds = (mres.data||[]).map(function(r){return r.user_id;});
+  if (!memberIds.length) return { pts:[], avg:[] };
+  var sres = await sb.from("player_stats").select("*").eq("group_id", groupId).in("user_id", memberIds);
+  var stats = sres.data||[];
+
+  var withMatches = stats.filter(function(s){ return (s.wins||0)+(s.losses||0) > 0; });
+  var maxPts = withMatches.reduce(function(mx,s){ return Math.max(mx, s.points); }, -Infinity);
+  var ptsLeaders = maxPts>-Infinity ? withMatches.filter(function(s){ return s.points===maxPts; }).map(function(s){return s.user_id;}) : [];
+
+  var mres2 = await sb.from("matches").select("pair1_p1,pair1_p2,pair2_p1,pair2_p2,played_at,created_at")
+    .eq("group_id", groupId).eq("status","approved");
+  var approvedM = mres2.data||[];
+  var THREE_MONTHS = 90*24*3600*1000;
+  var now = new Date();
+  function qualifiesAvg(uid) {
+    var dates = approvedM.filter(function(m){ return [m.pair1_p1,m.pair1_p2,m.pair2_p1,m.pair2_p2].indexOf(uid)>=0; })
+      .map(function(m){ return new Date(m.played_at||m.created_at); }).sort(function(a,b){return a-b;});
+    if (!dates.length) return false;
+    if (now - dates[dates.length-1] > THREE_MONTHS) return false;
+    var activeFrom = dates[0];
+    for (var i=1;i<dates.length;i++){ if (dates[i]-dates[i-1] > THREE_MONTHS) activeFrom = dates[i]; }
+    return dates.filter(function(d){ return d>=activeFrom; }).length >= 10;
+  }
+  var withAvg = stats.filter(function(s){ return qualifiesAvg(s.user_id); }).map(function(s){
+    var total = (s.wins||0)+(s.losses||0);
+    return { user_id:s.user_id, avg: total ? s.points/total : -Infinity };
+  });
+  var maxAvg = withAvg.reduce(function(mx,s){ return Math.max(mx, s.avg); }, -Infinity);
+  var avgLeaders = maxAvg>-Infinity ? withAvg.filter(function(s){ return s.avg===maxAvg; }).map(function(s){return s.user_id;}) : [];
+
+  return { pts: ptsLeaders, avg: avgLeaders };
+}
+
+// Compara el liderato de antes y después de un partido, y notifica solo a quien
+// pasa de NO ser líder a SÍ serlo en cada uno de los dos rankings.
+async function notifyIfNewLeader(pairIds, groupId, leadersBefore) {
+  var leadersAfter = await getRankingLeaders(groupId);
+  pairIds.forEach(function(uid){
+    if (leadersAfter.pts.indexOf(uid)>=0 && leadersBefore.pts.indexOf(uid)<0) {
+      sendPush(uid, "Ahora eres el líder",
+        `Has alcanzado el liderato del "Ranking de Puntos Totales". ¡Enhorabuena y a mantenerse! 🥇💪🏻`, "/");
+    }
+    if (leadersAfter.avg.indexOf(uid)>=0 && leadersBefore.avg.indexOf(uid)<0) {
+      sendPush(uid, "Ahora eres el líder",
+        `Has alcanzado el liderato del "Ranking de Promedio (PTS/PJ)". ¡Enhorabuena y a mantenerse! 🥇💪🏻`, "/");
+    }
+  });
+}
+
 function NotificationsPanel({ user, onClose, onCountChange }) {
   useBackClose(true, onClose);
   const toast = useToast();
@@ -1368,8 +1423,10 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
     var av=await sb.from("match_votes").select("*").eq("match_id",n.id);
     var approved=(av.data||[]).filter(function(x){return x.vote==="approve";}).map(function(x){return x.user_id;});
     if(n.allPids.every(function(pid){return approved.indexOf(pid)>=0;})){
+      var leadersBefore = await getRankingLeaders(n.group_id);
       await sb.from("matches").update({status:"approved", approved_at:new Date().toISOString()}).eq("id",n.id);
       await applyMatchStats(n.id,n.group_id,n.pair1,n.pair2,n.winner,n.set_scores);
+      notifyIfNewLeader(n.allPids, n.group_id, leadersBefore);
       toast("Partido aprobado y registrado ✔️");
     }
     setBusy(null); load();
@@ -5131,7 +5188,7 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
       notifyGroupActivity(allMemberIds, "tournament_created",
         getName(user.id)+" ha creado un torneo de "+FORMAT_LABELS[tFormat]+": \""+tName.trim()+"\".");
       sendPush(allMemberIds, "Nuevo torneo creado",
-        `"${getName(user.id)}" (Administrador del grupo) ha creado un nuevo torneo en el grupo "${group.name}".`, "/");
+        `"${getName(user.id)}" (Administrador del grupo) ha creado un nuevo torneo en el grupo "${group.name}". ¡Apúntate y a por todas!`, "/");
       if (tAdminId && tAdminId!==user.id) {
         notifyGroupActivity([tAdminId], "tournament_admin_assigned",
           getName(user.id)+" te ha nombrado Administrador del torneo \""+tName.trim()+"\".");
@@ -5369,7 +5426,7 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
     setOpenTournament(function(prev){ return prev && prev.id===t.id ? Object.assign({},prev,{tstatus:"in_progress",started_at:startedAtNow}) : prev; });
     var registeredIds = pairs.reduce(function(acc,p){ return acc.concat(p); }, []);
     sendPush(registeredIds, "Torneo comenzado",
-      `"${getName(user.id)}" (Administrador del torneo) ha dado comienzo al torneo "${t.name}" del grupo "${group.name}".`, "/");
+      `"${getName(user.id)}" (Administrador del torneo) ha dado comienzo al torneo "${t.name}" del grupo "${group.name}". ¡Suerte y a dar el máximo!`, "/");
     setBusy(false);
     if (!silent) toast("Torneo comenzado 🏆");
   };
@@ -5577,8 +5634,8 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
     var championIds = championPairs.reduce(function(acc,p){return acc.concat(p);}, []);
     var otherIds = participantIds.filter(function(id){ return championIds.indexOf(id)===-1; });
     var baseMsg = `"${getName(user.id)}" (Administrador del torneo) ha dado por finalizado el torneo "${t.name}" del grupo "${group.name}".`;
-    if (championIds.length) sendPush(championIds, "Torneo finalizado", baseMsg+" Enhorabuena por el campeonato! 💪🏻👏🏻", "/");
-    if (otherIds.length) sendPush(otherIds, "Torneo finalizado", baseMsg+" A seguir!", "/");
+    if (championIds.length) sendPush(championIds, "Torneo finalizado", baseMsg+" ¡Enhorabuena por el campeonato! 🥇💪🏻", "/");
+    if (otherIds.length) sendPush(otherIds, "Torneo finalizado", baseMsg+" ¡A seguir! 💪🏻", "/");
     setBusy(false);
     setPressedFinishId(null);
     setShowFinishConfirm(null);
