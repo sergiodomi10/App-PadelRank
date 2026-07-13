@@ -1572,7 +1572,7 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
       });
   };
 
-  const dismissAllEligible = function() {
+  const dismissAllEligible = async function() {
     var toRemove = notifs.filter(function(n){
       if (n.kind==="match") return n.status==="approved" || n.status==="rejected";
       if (n.kind==="history") return n.status!=="pending";
@@ -1585,28 +1585,37 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
     toRemove.forEach(function(n){ removeSet[n.kind+"_"+n.id] = true; });
     var next = notifs.filter(function(n){ return !removeSet[n.kind+"_"+n.id]; });
     setNotifs(next); updateCount(next);
-    toRemove.forEach(function(n){
+    var ops = toRemove.map(function(n){
       if (n.kind==="match") {
         saveD(DKEY, n.id);
-        sb.from("match_votes").upsert({match_id:n.id, user_id:user.id, vote:"dismissed"},{onConflict:"match_id,user_id"});
+        return sb.from("match_votes").upsert({match_id:n.id, user_id:user.id, vote:"dismissed"},{onConflict:"match_id,user_id"});
       } else if (n.kind==="history") {
         saveD(HDKEY, n.id);
-        sb.from("history_deletion_votes").upsert({deletion_id:n.id, user_id:user.id, vote:"dismissed"},{onConflict:"deletion_id,user_id"});
+        return sb.from("history_deletion_votes").upsert({deletion_id:n.id, user_id:user.id, vote:"dismissed"},{onConflict:"deletion_id,user_id"});
       } else if (n.kind==="chatdel") {
         saveD(CDKEY, n.id);
-        sb.from("group_chat_deletion_votes").upsert({deletion_id:n.id, user_id:user.id, vote:"dismissed"},{onConflict:"deletion_id,user_id"});
+        return sb.from("group_chat_deletion_votes").upsert({deletion_id:n.id, user_id:user.id, vote:"dismissed"},{onConflict:"deletion_id,user_id"});
       } else if (n.kind==="groupdel") {
-        sb.from("group_deletion_notice_dismissals").insert({notice_id:n.id, user_id:user.id});
+        return sb.from("group_deletion_notice_dismissals").insert({notice_id:n.id, user_id:user.id});
       } else if (n.kind==="mention") {
-        sb.from("group_chat_mention_dismissals").insert({mention_id:n.id, user_id:user.id});
+        return sb.from("group_chat_mention_dismissals").insert({mention_id:n.id, user_id:user.id});
       } else if (n.kind==="reply") {
-        sb.from("group_chat_reply_dismissals").insert({notification_id:n.id, user_id:user.id});
+        return sb.from("group_chat_reply_dismissals").insert({notification_id:n.id, user_id:user.id});
       } else if (n.kind==="matchformed") {
-        sb.from("group_chat_match_notif_dismissals").insert({notification_id:n.id, user_id:user.id});
+        return sb.from("group_chat_match_notif_dismissals").insert({notification_id:n.id, user_id:user.id});
       } else if (n.kind==="scoring") {
-        sb.from("group_scoring_notif_dismissals").insert({notification_id:n.id, user_id:user.id});
+        return sb.from("group_scoring_notif_dismissals").insert({notification_id:n.id, user_id:user.id});
       } else if (n.kind==="activity") {
-        sb.from("group_activity_notif_dismissals").insert({notification_id:n.id, user_id:user.id});
+        return sb.from("group_activity_notif_dismissals").insert({notification_id:n.id, user_id:user.id});
+      }
+      return Promise.resolve(null);
+    });
+    var results = await Promise.allSettled(ops);
+    results.forEach(function(r, i){
+      if (r.status==="rejected") {
+        console.error("Error al eliminar notificación en bloque:", toRemove[i], r.reason);
+      } else if (r.value && r.value.error) {
+        console.error("Error al eliminar notificación en bloque:", toRemove[i], r.value.error);
       }
     });
   };
@@ -1624,13 +1633,16 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
       <button onClick=${()=>setShowDeleteAllConfirm(true)} style=${{ background:"none", border:"1.5px solid #fff",
         borderRadius:"50%", width:40, height:40, display:"flex", alignItems:"center",
         justifyContent:"center", color:C.text, cursor:"pointer", fontSize:22,
-        lineHeight:1, flexShrink:0, marginLeft:"auto" }}><img src=${TRASH_ICON_SRC} style=${{ width:"55%", height:"55%", objectFit:"contain", display:"block" }} /></button>
+        lineHeight:1, flexShrink:0, marginLeft:"auto" }}><img src=${TRASH_ICON_SRC} style=${{ width:"82%", height:"82%", objectFit:"contain", display:"block" }} /></button>
     </header>
     ${showDeleteAllConfirm && html`<div onClick=${()=>setShowDeleteAllConfirm(false)} style=${{ position:"fixed", inset:0, zIndex:300,
       background:"rgba(0,0,0,0.6)", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
       <div onClick=${e=>e.stopPropagation()} style=${{ background:C.card, border:"1px solid #fff", borderRadius:14,
         padding:20, maxWidth:360, width:"100%" }}>
-        <div style=${{ color:"#fff", fontWeight:800, fontSize:16, marginBottom:10 }}>Eliminar todas las notificaciones</div>
+        <div style=${{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+          <img src=${TRASH_ICON_SRC} style=${{ width:22, height:22, objectFit:"contain", flexShrink:0 }} />
+          <div style=${{ color:"#fff", fontWeight:800, fontSize:16 }}>Eliminar todas las notificaciones</div>
+        </div>
         <div style=${{ color:"#fff", fontSize:14, lineHeight:1.4, marginBottom:18 }}>¿Estás seguro de que quieres eliminar de la pantalla todas las notificaciones eliminables? Se eliminarán todas ellas permanentemente.</div>
         <div style=${{ display:"flex", gap:10 }}>
           <button onClick=${()=>setShowDeleteAllConfirm(false)} style=${{ flex:1, padding:"10px", background:"none",
