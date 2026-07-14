@@ -3847,7 +3847,7 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
     setMsgs(prev => prev.some(x=>x.id===data.id) ? prev : [...prev, data]);
     var allMemberIds = (members||[]).map(function(m){return m.id;}).filter(function(id){return id!==user.id;});
     sendPush(allMemberIds, "Propuesta de partido",
-      `"${getName(user.id)}" ha propuesto para formar un partido para el "${fmtDDMMYYYY(proposeDate)}" a las "${proposeTime}". ¡Apúntate ya! ✍🏻`, "/");
+      `"${getName(user.id)}" ha propuesto para formar un partido en el chat del grupo "${group.name}" para el "${fmtDDMMYYYY(proposeDate)}" a las "${proposeTime}". ¡Apúntate ya! ✍🏻`, "/");
     setShowProposeMatch(false); setProposeDate(""); setProposeTime("");
   };
 
@@ -4028,7 +4028,7 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
       backgroundImage: chatBackground.type==="image" ? "url("+chatBackground.value+")" : "none",
       backgroundSize: "contain", backgroundPosition:"center", backgroundRepeat:"no-repeat" }} />
     <header onClick=${closeSettingsUnlessColorPicker} style=${{ padding:"12px 16px", borderBottom:"1px solid "+C.border,
-      display:"flex", alignItems:"center", gap:10, flexShrink:0, position:"relative", zIndex:2, background:C.bg }}>
+      display:"flex", alignItems:"center", gap:10, flexShrink:0, position:"relative", zIndex:5, background:C.bg }}>
       <button onClick=${onClose} style=${{ background:C.card2, border:"1.5px solid #fff",
         borderRadius:"50%", width:40, height:40, display:"flex", alignItems:"center",
         justifyContent:"center", color:C.text, cursor:"pointer", fontSize:22, lineHeight:1, flexShrink:0 }}><img src=${BACKARROW_ICON_SRC} style=${{ width:"55%", height:"55%", objectFit:"contain", display:"block" }} /></button>
@@ -8934,7 +8934,7 @@ function NewMatchTab({ members, user, onSubmit, isAdmin, scoring, onSaveScoring 
 
   if (members.length < 4) return html`<div style=${{ textAlign:"center", padding:"60px 0" }}>
     <div style=${{ fontSize:48 }}>👥</div>
-    <p style=${{ color:C.muted, fontSize:14, marginTop:12, lineHeight:1.6 }}>
+    <p style=${{ color:"#fff", fontSize:14, marginTop:12, lineHeight:1.6 }}>
       Necesitas al menos 4 jugadores en el grupo.<br/>Comparte el código de invitación.
     </p>
   </div>`;
@@ -9383,7 +9383,7 @@ function HistoryTab({ history, getName, group, user, members }) {
     ${FilterBar}
     <div style=${{ textAlign:"center", padding:"40px 0" }}>
       <div style=${{ fontSize:48 }}>📋</div>
-      <p style=${{ color:C.muted, fontSize:14, marginTop:12 }}>Sin partidos en este período</p>
+      <p style=${{ color:"#fff", fontSize:14, marginTop:12 }}>Sin partidos en este período</p>
     </div>
   </div>`;
 
