@@ -1672,13 +1672,13 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
       </div>
     </div>`}
     <main style=${{ flex:1, overflowY:"auto", padding:"16px" }}>
-      ${loading && html`<${Spinner}/>`}
+      ${loading && notifs.length===0 && html`<${Spinner}/>`}
       ${!loading && notifs.length===0 && html`<div style=${{ textAlign:"center", padding:"60px 0" }}>
         <div style=${{ fontSize:40 }}>✅</div>
         <p style=${{ color:C.text, marginTop:12 }}>No tienes notificaciones pendientes</p>
       </div>`}
 
-      ${!loading && notifs.map(function(n) {
+      ${notifs.map(function(n) {
         if (n.kind === "history") {
           var isDecided = n.status!=="pending";
           var decisionMsg = n.status==="approved"
@@ -4973,6 +4973,16 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
     saveHiddenTourns(getHiddenTourns().filter(function(h){return h.id!==t.id;}));
     setShowUnhideTournConfirm(null);
   };
+  const [showDeleteFinishedConfirm, setShowDeleteFinishedConfirm] = useState(null);
+  const DFT_KEY = "padelrank_dft_" + user.id + "_" + group.id;
+  const getDeletedFinishedTourns = function(){ try{ return JSON.parse(localStorage.getItem(DFT_KEY)||"[]"); }catch(e){ return []; } };
+  const deleteFinishedTournamentForMe = function(t){
+    var deleted = getDeletedFinishedTourns();
+    if (deleted.indexOf(t.id) < 0) deleted.push(t.id);
+    try { localStorage.setItem(DFT_KEY, JSON.stringify(deleted)); } catch(e) {}
+    setHiddenTournIdsTick(function(x){return x+1;});
+    setShowDeleteFinishedConfirm(null);
+  };
   const [showSignedPairsModal, setShowSignedPairsModal] = useState(null);
   const [showGroupSlotPickerFor, setShowGroupSlotPickerFor] = useState(null);
   const [groupSlotSearch, setGroupSlotSearch] = useState("");
@@ -6470,8 +6480,9 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
           })()
         : (function(){
             var hiddenTournSet = new Set(getHiddenTourns().map(function(h){return h.id;}));
+            var deletedFinishedSet = new Set(getDeletedFinishedTourns());
             var visibleTournaments = tournaments.filter(function(t){
-              if (tournView==="finished") return t.tstatus==="finished" && !hiddenTournSet.has(t.id);
+              if (tournView==="finished") return t.tstatus==="finished" && !hiddenTournSet.has(t.id) && !deletedFinishedSet.has(t.id);
               return t.tstatus!=="finished";
             });
             if (tournView==="finished") {
@@ -6517,6 +6528,11 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
                     ${t.tournament_admin_id===user.id && html`<button onClick=${function(){deleteTournament(t);}} style=${{ background:"#000", border:"1px solid #fff",
                       borderRadius:"50%", width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center",
                       color:C.lose, cursor:"pointer", fontSize:14, flexShrink:0 }}>🗑️</button>`}
+                  </div>`}
+                  ${t.tstatus==="finished" && html`<div style=${{ display:"flex", gap:8 }}>
+                    <button onClick=${function(){setShowDeleteFinishedConfirm(t);}} style=${{ background:"#000", border:"1px solid #fff",
+                      borderRadius:"50%", width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center",
+                      color:C.lose, cursor:"pointer", fontSize:14, flexShrink:0 }}>🗑️</button>
                   </div>`}
                 </div>
                 ${t.image_url && html`<div style=${{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:2 }}>
@@ -6744,6 +6760,19 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
             border:"1px solid "+C.lose, borderRadius:8, color:C.lose, fontWeight:700, fontSize:13, cursor:"pointer" }}>Cancelar</button>
           <button onClick=${()=>confirmDeleteTournament(showDeleteTournConfirm)} style=${{ flex:1, padding:"10px", background:"none",
             border:"1px solid "+C.win, borderRadius:8, color:C.win, fontWeight:700, fontSize:13, cursor:"pointer" }}>Confirmar</button>
+        </div>
+      </div>
+    <//>`}
+    ${showDeleteFinishedConfirm && html`<${Modal} title="🗑️ Eliminar torneo permanentemente" zIndex=${showHiddenTorneos?350:100} onClose=${()=>setShowDeleteFinishedConfirm(null)}>
+      <div style=${{ display:"flex", flexDirection:"column", gap:14 }}>
+        <p style=${{ fontSize:13, color:"#fff", lineHeight:1.5 }}>
+          ¿Estás seguro de que quieres eliminar permanentemente de tu pantalla de "Torneos Finalizados" el torneo <strong>"${showDeleteFinishedConfirm.name}"</strong>? El torneo no te volverá a aparecer en esta pantalla.
+        </p>
+        <div style=${{ display:"flex", gap:8 }}>
+          <button onClick=${()=>setShowDeleteFinishedConfirm(null)} style=${{ flex:1, padding:"10px", background:"none",
+            border:"1px solid "+C.lose, borderRadius:8, color:C.lose, fontWeight:700, fontSize:13, cursor:"pointer" }}>Cancelar</button>
+          <button onClick=${()=>deleteFinishedTournamentForMe(showDeleteFinishedConfirm)} style=${{ flex:1, padding:"10px", background:"none",
+            border:"1px solid "+C.win, borderRadius:8, color:C.win, fontWeight:700, fontSize:13, cursor:"pointer" }}>Aceptar</button>
         </div>
       </div>
     <//>`}
