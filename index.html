@@ -4804,7 +4804,7 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
         ${reactions.some(function(r){return r.message_id===reactionPopup.messageId && r.user_id===user.id && r.emoji===reactionPopup.emoji;})
           && html`<div style=${{ display:"flex", flexDirection:"column", gap:8 }}>
             <button onClick=${()=>{ var mid=reactionPopup.messageId; setReactionPopup(null); setReactPickerFor(mid); setReactPickerFull(false); }}
-              style=${{ padding:"10px", background:"none", border:"1px solid "+C.border, borderRadius:10,
+              style=${{ padding:"10px", background:"none", border:"1px solid #fff", borderRadius:10,
                 color:"#fff", fontSize:13, fontWeight:600, cursor:"pointer" }}>Modificar emoji</button>
             <button onClick=${()=>removeMyReaction(reactionPopup.messageId)}
               style=${{ padding:"10px", background:"none", border:"1px solid "+C.lose, borderRadius:10,
