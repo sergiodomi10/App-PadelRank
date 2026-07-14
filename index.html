@@ -6654,6 +6654,8 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
                   color: pressedVerTorneoId===t.id?"#000":"#fff", fontWeight:800, fontSize:13, cursor:"pointer" }}>
                   📊 Ver torneo
                 </button>`}
+                ${t.tstatus==="in_progress" && joined && html`<div style=${{ fontSize:13, color:C.win, textAlign:"center", fontWeight:700 }}>Apuntado al torneo ✅</div>`}
+                ${t.tstatus==="in_progress" && !joined && html`<div style=${{ fontSize:13, color:C.lose, textAlign:"center", fontWeight:700 }}>No apuntado al torneo ❌</div>`}
               </div>`;
             })}
           </div>`;
@@ -6750,10 +6752,10 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
         ${showDescModal.description}
       </div>
     <//>`}
-    ${showDeleteTournConfirm && html`<${Modal} title="🗑️ Eliminar torneo" zIndex=${showHiddenTorneos?350:100} onClose=${()=>setShowDeleteTournConfirm(null)}>
+    ${showDeleteTournConfirm && html`<${Modal} title="🗑️ Eliminar torneo permanentemente" zIndex=${showHiddenTorneos?350:100} onClose=${()=>setShowDeleteTournConfirm(null)}>
       <div style=${{ display:"flex", flexDirection:"column", gap:14 }}>
         <p style=${{ fontSize:13, color:"#fff", lineHeight:1.5 }}>
-          ¿Eliminar el torneo <strong>"${showDeleteTournConfirm.name}"</strong>? Esta acción no se puede deshacer.
+          ¿Estás seguro de que quieres eliminar permanentemente el torneo <strong>"${showDeleteTournConfirm.name}"</strong>? El torneo será eliminado permanentemente, y esta acción no se puede deshacer.
         </p>
         <div style=${{ display:"flex", gap:8 }}>
           <button onClick=${()=>setShowDeleteTournConfirm(null)} style=${{ flex:1, padding:"10px", background:"none",
@@ -7057,7 +7059,7 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
       <div style=${{ display:"flex", flexDirection:"column", gap:12 }}>
         ${(editingTournament && editingTournament.tstatus==="in_progress") && html`<div style=${{ fontSize:12, color:"#fff", background:C.card2,
           border:"1px solid "+C.border, borderRadius:10, padding:"10px 12px", lineHeight:1.5 }}>
-          El torneo ya ha comenzado. Solo puedes modificar la fecha de inicio y la fecha de fin.
+          El torneo ya ha comenzado. Únicamente puedes modificar el Administrador del torneo, y editar las fechas de inicio y finalización del torneo.
         </div>`}
         ${!(editingTournament && editingTournament.tstatus==="in_progress") && html`<div style=${{ display:"flex", flexDirection:"column", gap:12 }}>
         <div>
