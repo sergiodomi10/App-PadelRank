@@ -1514,12 +1514,12 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
       await sb.from("group_chat_deletions").update({status:"approved", resolved_at:new Date().toISOString()}).eq("id",n.id);
       await sb.from("group_chat_messages").delete().eq("group_id",n.group_id);
       sendPush(memberIds2, "Mensajes del chat eliminados",
-        "La votación para la eliminación de los mensajes del chat ha resultado ser aprobada. Por tanto, todos los mensajes del chat han sido eliminados.", "/");
+        `La votación para la eliminación de los mensajes del chat del grupo "${n.groupName}" ha resultado ser aprobada. Por tanto, todos los mensajes del chat han sido eliminados.`, "/");
       toast("Mensajes del chat eliminados 🗑️");
     } else if (rj >= n.rejectNeeded) {
       await sb.from("group_chat_deletions").update({status:"rejected", resolved_at:new Date().toISOString()}).eq("id",n.id);
       sendPush(memberIds2, "Mensajes del chat no eliminados",
-        "La votación para la eliminación de los mensajes del chat ha resultado ser rechazada. Por tanto, todos los mensajes del chat no han sido eliminados.", "/");
+        `La votación para la eliminación de los mensajes del chat del grupo "${n.groupName}" ha resultado ser rechazada. Por tanto, los mensajes del chat no han sido eliminados.`, "/");
     }
     setBusy(null); load();
   };
