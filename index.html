@@ -3845,7 +3845,7 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
     }).select().single();
     if (error) { toast("Error al proponer el partido", "err"); return; }
     setMsgs(prev => prev.some(x=>x.id===data.id) ? prev : [...prev, data]);
-    var allMemberIds = (members||[]).map(function(m){return m.id;});
+    var allMemberIds = (members||[]).map(function(m){return m.id;}).filter(function(id){return id!==user.id;});
     sendPush(allMemberIds, "Propuesta de partido",
       `"${getName(user.id)}" ha propuesto para formar un partido para el "${fmtDDMMYYYY(proposeDate)}" a las "${proposeTime}". ¡Apúntate ya! ✍🏻`, "/");
     setShowProposeMatch(false); setProposeDate(""); setProposeTime("");
@@ -3876,7 +3876,7 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
         await sb.from("group_chat_messages").update({ proposal_notified:true }).eq("id", m.id);
         setMsgs(prev => prev.map(x=>x.id===m.id ? Object.assign({},x,{proposal_notified:true}) : x));
         var formedUids = joinsNow.slice(0,4).map(function(j){return j.user_id;});
-        formedUids.forEach(function(uid){
+        formedUids.filter(function(uid){ return uid!==user.id; }).forEach(function(uid){
           var others = formedUids.filter(function(x){return x!==uid;}).map(function(x){return getName(x);});
           var othersStr = others.length<=1 ? `"${others[0]||""}"` : `"${others.slice(0,-1).join('", "')}" y "${others[others.length-1]}"`;
           sendPush(uid, "Partido formado",
