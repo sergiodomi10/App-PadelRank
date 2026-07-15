@@ -292,7 +292,7 @@ function ToastProvider({ children }) {
   const [toast, setToast] = useState(null);
   const show = useCallback((msg, type="ok", textColor, opts) => {
     setToast({ msg, type, textColor, opts: opts||{} });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), (opts && opts.duration) || 3000);
   }, []);
   return html`<${ToastCtx.Provider} value=${show}>
     ${children}
@@ -4210,7 +4210,7 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
               ⚙️ Ajustes del chat
             </button>
             ${!pendingChatDel
-              ? html`<button onClick=${()=>{ setSettingsStage(0); if(!isAdmin){ toast("❌ Únicamente el Administrador del grupo puede realizar esta acción", "ok", C.lose, {bgColor:"#000", fontSize:12, wrap:true, borderColor:C.lose}); return; } setShowChatDelConfirm(true); setChatDelText(""); setChatDelState(null); }} style=${{
+              ? html`<button onClick=${()=>{ setSettingsStage(0); if(!isAdmin){ toast("❌ Únicamente el Administrador del grupo puede realizar esta acción", "ok", C.lose, {bgColor:"#000", fontSize:12, wrap:true, borderColor:C.lose, duration:1500}); return; } setShowChatDelConfirm(true); setChatDelText(""); setChatDelState(null); }} style=${{
                   display:"block", width:"100%", padding:"12px 14px", background:"none",
                   border:"none", color:C.lose, fontSize:13, textAlign:"left", cursor:"pointer" }}>
                   🗑️ Eliminar mensajes del chat
@@ -9404,7 +9404,7 @@ function HistoryTab({ history, getName, group, user, members, isAdmin }) {
 
   const DeleteBar = html`<div style=${{ marginBottom:14 }}>
     ${(!pendingDeletion && delState!=="ok") && html`<div style=${{ display:"flex", justifyContent:"flex-end" }}>
-      <button onClick=${()=>{ if(!isAdmin){ toast("❌ Únicamente el Administrador del grupo puede realizar esta acción", "ok", C.lose, {bgColor:"#000", fontSize:12, wrap:true, borderColor:C.lose}); return; } setDelOpen(true); setDelText(""); setDelState(null); }}
+      <button onClick=${()=>{ if(!isAdmin){ toast("❌ Únicamente el Administrador del grupo puede realizar esta acción", "ok", C.lose, {bgColor:"#000", fontSize:12, wrap:true, borderColor:C.lose, duration:1500}); return; } setDelOpen(true); setDelText(""); setDelState(null); }}
         style=${{ background:"none", border:"1px solid "+C.lose+"55", borderRadius:10,
           padding:"8px 14px", color:C.lose, fontWeight:700, fontSize:12, cursor:"pointer" }}>
         Eliminar historial completo
