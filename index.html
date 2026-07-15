@@ -2762,7 +2762,7 @@ function HomeScreen({ user, profile, onSelect, openHidden }) {
                 try { await sb.auth.signOut(); } catch(e) {}
                 window.location.reload();
               }}
-              style=${{ flex:1, padding:"11px", background:C.win+"18", border:"1px solid "+C.win+"66",
+              style=${{ flex:1, padding:"11px", background:"none", border:"1px solid "+C.win+"66",
                 borderRadius:10, color:C.win, fontWeight:700, fontSize:14, cursor:"pointer" }}>
               Aceptar
             </button>
@@ -2845,6 +2845,7 @@ function HomeScreen({ user, profile, onSelect, openHidden }) {
           <p style=${{ color:"#fff", fontSize:14, marginTop:12, marginBottom:6 }}>Aún no perteneces a ningún grupo</p>
           <p style=${{ color:"#fff", fontSize:14, marginBottom:28 }}>¡Únete a un grupo y conviértete en el número 1! 🥇💪🏻</p>
         </div>` : html`<div style=${{ display:"flex", flexDirection:"column", gap:10, marginBottom:16 }}>
+          <div style=${{ color:"#fff", fontWeight:800, fontSize:14, marginBottom:2 }}>Tus grupos:</div>
           ${groups.map(g => html`<div key=${g.id}>
           <div style=${{ position:"relative" }}>
           <div onClick=${() => onSelect(g)} style=${{
@@ -4207,7 +4208,7 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
               ⚙️ Ajustes del chat
             </button>
             ${!pendingChatDel
-              ? html`<button onClick=${()=>{ setSettingsStage(0); setShowChatDelConfirm(true); setChatDelText(""); setChatDelState(null); }} style=${{
+              ? html`<button onClick=${()=>{ setSettingsStage(0); if(!isAdmin){ toast("Únicamente el Administrador del grupo puede realizar esta acción", "ok", C.lose); return; } setShowChatDelConfirm(true); setChatDelText(""); setChatDelState(null); }} style=${{
                   display:"block", width:"100%", padding:"12px 14px", background:"none",
                   border:"none", color:C.lose, fontSize:13, textAlign:"left", cursor:"pointer" }}>
                   🗑️ Eliminar mensajes del chat
@@ -4507,9 +4508,9 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
                   transition:"background-color 0.4s", background: highlighted ? "rgba(134,239,172,0.18)" : "transparent",
                   marginLeft:-14, marginRight:-14, paddingLeft:14, paddingRight:14, paddingTop:2, paddingBottom:2 }}>
                 <div
-                  onTouchStart=${()=>startPress(m.id)} onTouchEnd=${()=>endPress(m.id)} onTouchCancel=${()=>endPress(m.id)}
-                  onTouchMove=${()=>endPress(m.id)}
-                  onMouseDown=${()=>startPress(m.id)} onMouseUp=${()=>endPress(m.id)} onMouseLeave=${()=>endPress(m.id)}
+                  onTouchStart=${()=>{ if(!m.deleted) startPress(m.id); }} onTouchEnd=${()=>{ if(!m.deleted) endPress(m.id); }} onTouchCancel=${()=>{ if(!m.deleted) endPress(m.id); }}
+                  onTouchMove=${()=>{ if(!m.deleted) endPress(m.id); }}
+                  onMouseDown=${()=>{ if(!m.deleted) startPress(m.id); }} onMouseUp=${()=>{ if(!m.deleted) endPress(m.id); }} onMouseLeave=${()=>{ if(!m.deleted) endPress(m.id); }}
                   onContextMenu=${e=>e.preventDefault()}
                   style=${{ maxWidth:"95%", minWidth:"46%", position:"relative",
                     userSelect:"none", WebkitUserSelect:"none", WebkitTouchCallout:"none",
@@ -7775,7 +7776,7 @@ function GroupScreen({ group, user, profile, onBack }) {
         ${tab==="ranking"   && html`<${RankingTab}   groupId=${group.id} ranked=${ranked} allMatches=${matches} members=${members} isAdmin=${adminIds.indexOf(user.id)>=0} user=${user} onPlayerClick=${(p,period)=>{setStatsPlayer(p);setStatsPeriod(period);}} />`}
         ${tab==="nuevo"     && html`<${NewMatchTab}  members=${members} user=${user} onSubmit=${submitMatch}
           isAdmin=${adminIds.indexOf(user.id)>=0} scoring=${scoring} onSaveScoring=${saveScoring} />`}
-        ${tab==="historial" && html`<${HistoryTab}   history=${history} getName=${getName} group=${group} user=${user} members=${members} />`}
+        ${tab==="historial" && html`<${HistoryTab}   history=${history} getName=${getName} group=${group} user=${user} members=${members} isAdmin=${adminIds.indexOf(user.id)>=0} />`}
       </div>`}
     </main>
     ${statsPlayer && html`<${StatsModal} player=${statsPlayer}
@@ -9316,7 +9317,7 @@ function NewMatchTab({ members, user, onSubmit, isAdmin, scoring, onSaveScoring 
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-function HistoryTab({ history, getName, group, user, members }) {
+function HistoryTab({ history, getName, group, user, members, isAdmin }) {
   const toast = useToast();
   const [delOpen,    setDelOpen]    = useState(false);
   const [delText,    setDelText]    = useState("");
@@ -9401,7 +9402,7 @@ function HistoryTab({ history, getName, group, user, members }) {
 
   const DeleteBar = html`<div style=${{ marginBottom:14 }}>
     ${(!pendingDeletion && delState!=="ok") && html`<div style=${{ display:"flex", justifyContent:"flex-end" }}>
-      <button onClick=${()=>{ setDelOpen(true); setDelText(""); setDelState(null); }}
+      <button onClick=${()=>{ if(!isAdmin){ toast("Únicamente el Administrador del grupo puede realizar esta acción", "ok", C.lose); return; } setDelOpen(true); setDelText(""); setDelState(null); }}
         style=${{ background:"none", border:"1px solid "+C.lose+"55", borderRadius:10,
           padding:"8px 14px", color:C.lose, fontWeight:700, fontSize:12, cursor:"pointer" }}>
         Eliminar historial completo
