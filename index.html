@@ -1052,11 +1052,11 @@ async function notifyIfNewLeader(pairIds, groupId, leadersBefore) {
   pairIds.forEach(function(uid){
     if (leadersAfter.pts.indexOf(uid)>=0 && leadersBefore.pts.indexOf(uid)<0) {
       sendPush(uid, "Ahora eres el líder",
-        `Has alcanzado el liderato del "Ranking de Puntos Totales". ¡Enhorabuena y a mantenerse! 🥇💪🏻`, "/");
+        `Has alcanzado el liderato del Ranking de Puntos Totales. ¡Enhorabuena y a mantenerse! 🥇💪🏻`, "/");
     }
     if (leadersAfter.avg.indexOf(uid)>=0 && leadersBefore.avg.indexOf(uid)<0) {
       sendPush(uid, "Ahora eres el líder",
-        `Has alcanzado el liderato del "Ranking de Promedio (PTS/PJ)". ¡Enhorabuena y a mantenerse! 🥇💪🏻`, "/");
+        `Has alcanzado el liderato del Ranking de Promedio (PTS/PJ). ¡Enhorabuena y a mantenerse! 🥇💪🏻`, "/");
     }
   });
 }
@@ -1432,7 +1432,7 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
       notifyIfNewLeader(n.allPids, n.group_id, leadersBefore);
       var othersOnApprove = n.allPids.filter(function(pid){ return pid!==user.id; });
       sendPush(othersOnApprove, "Partido registrado",
-        `Los 4 jugadores del partido de "${n.p1a}"/"${n.p1b}" vs "${n.p2a}"/"${n.p2b}", con resultado de "${n.setsStr}", habéis aprobado el partido. Por tanto, el partido ha sido registrado. ✅`, "/");
+        `Los 4 jugadores del partido de ${n.p1a}/${n.p1b} vs ${n.p2a}/${n.p2b}, con resultado de ${n.setsStr}, habéis aprobado el partido. Por tanto, el partido ha sido registrado. ✅`, "/");
       toast("Partido aprobado y registrado ✔️");
     }
     setBusy(null); load();
@@ -1446,7 +1446,7 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
     var rejName = (rejProf.data && rejProf.data.name) || "?";
     var othersOnReject = n.allPids.filter(function(pid){ return pid!==user.id; });
     sendPush(othersOnReject, "Partido rechazado",
-      `"${rejName}" ha rechazado el registro del partido de "${n.p1a}"/"${n.p1b}" vs "${n.p2a}"/"${n.p2b}", con resultado de "${n.setsStr}". Por tanto, el partido no ha sido registrado. ❌`, "/");
+      `${rejName} ha rechazado el registro del partido de ${n.p1a}/${n.p1b} vs ${n.p2a}/${n.p2b}, con resultado de ${n.setsStr}. Por tanto, el partido no ha sido registrado. ❌`, "/");
     toast("Partido no registrado ❌", "ok", C.lose);
     setRejState("ok"); setBusy(null);
     setTimeout(function(){
@@ -1515,12 +1515,12 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
       await sb.from("group_chat_deletions").update({status:"approved", resolved_at:new Date().toISOString()}).eq("id",n.id);
       await sb.from("group_chat_messages").delete().eq("group_id",n.group_id);
       sendPush(memberIds2, "Mensajes del chat eliminados",
-        `La votación para la eliminación de los mensajes del chat del grupo "${n.groupName}" ha resultado ser aprobada. Por tanto, todos los mensajes del chat han sido eliminados.`, "/");
+        `La votación para la eliminación de los mensajes del chat del grupo ${n.groupName} ha resultado ser aprobada. Por tanto, todos los mensajes del chat han sido eliminados.`, "/");
       toast("Mensajes del chat eliminados 🗑️");
     } else if (rj >= n.rejectNeeded) {
       await sb.from("group_chat_deletions").update({status:"rejected", resolved_at:new Date().toISOString()}).eq("id",n.id);
       sendPush(memberIds2, "Mensajes del chat no eliminados",
-        `La votación para la eliminación de los mensajes del chat del grupo "${n.groupName}" ha resultado ser rechazada. Por tanto, los mensajes del chat no han sido eliminados.`, "/");
+        `La votación para la eliminación de los mensajes del chat del grupo ${n.groupName} ha resultado ser rechazada. Por tanto, los mensajes del chat no han sido eliminados.`, "/");
     }
     setBusy(null); load();
   };
@@ -2259,7 +2259,7 @@ function HomeScreen({ user, profile, onSelect, openHidden }) {
     setFeedbackBusy(false);
     if (error) { setFeedbackErr("No se pudo enviar: " + error.message); return; }
     sendPush(APP_OWNER_ID, feedbackKind==="bug" ? "🐞 Nuevo problema reportado" : "💡 Nueva sugerencia recibida",
-      `"${payload.user_name}": ${text.slice(0,120)}${text.length>120?"…":""}`, "/");
+      `${payload.user_name}: ${text.slice(0,120)}${text.length>120?"…":""}`, "/");
     setShowFeedbackForm(false);
     setFeedbackMsg("");
     toast("¡Gracias! Tu mensaje se ha enviado al equipo de PadelRank ✅");
@@ -2687,6 +2687,20 @@ function HomeScreen({ user, profile, onSelect, openHidden }) {
       </header>
       <div onClick=${()=>{ setShowSignOut(false); setShowDel(false); setShowPushToggleConfirm(false); }}
         style=${{ flex:1, overflowY:"auto", padding:20, display:"flex", flexDirection:"column", gap:12 }}>
+        ${user.id!==APP_OWNER_ID && html`<button onClick=${e => { e.stopPropagation(); setShowPushToggleConfirm(false); setShowDel(false); setShowSignOut(false); setShowFeedbackForm(true); setFeedbackKind("bug"); setFeedbackMsg(""); setFeedbackErr(""); }} style=${{
+          background:"none", border:"1px solid #fff", textAlign:"left",
+          borderRadius:10, color:"#fff", fontSize:14, fontWeight:600, padding:"14px 16px", cursor:"pointer",
+          display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
+          <span>Reportar problema / Hacer sugerencia</span>
+          <span>💬</span>
+        </button>`}
+        ${user.id===APP_OWNER_ID && html`<button onClick=${e => { e.stopPropagation(); setShowPushToggleConfirm(false); setShowDel(false); setShowSignOut(false); setShowFeedbackInbox(true); }} style=${{
+          background:"none", border:"1px solid #fff", textAlign:"left",
+          borderRadius:10, color:"#fff", fontSize:14, fontWeight:600, padding:"14px 16px", cursor:"pointer",
+          display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
+          <span>Buzón de reportes y sugerencias</span>
+          <span>📥</span>
+        </button>`}
         ${pushStatus !== "unsupported" && html`<button
           disabled=${pushStatus === "busy" || pushStatus === "checking"}
           onClick=${e => { e.stopPropagation(); if (pushStatus === "on" || pushStatus === "off") { setShowSignOut(false); setShowDel(false); setShowPushToggleConfirm(true); } }}
@@ -2718,20 +2732,6 @@ function HomeScreen({ user, profile, onSelect, openHidden }) {
             </div>
           </div>
         </div>`}
-        <button onClick=${e => { e.stopPropagation(); setShowPushToggleConfirm(false); setShowDel(false); setShowSignOut(false); setShowFeedbackForm(true); setFeedbackKind("bug"); setFeedbackMsg(""); setFeedbackErr(""); }} style=${{
-          background:"none", border:"1px solid #fff", textAlign:"left",
-          borderRadius:10, color:"#fff", fontSize:14, fontWeight:600, padding:"14px 16px", cursor:"pointer",
-          display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
-          <span>Reportar un problema / Sugerencia</span>
-          <span>💬</span>
-        </button>
-        ${user.id===APP_OWNER_ID && html`<button onClick=${e => { e.stopPropagation(); setShowPushToggleConfirm(false); setShowDel(false); setShowSignOut(false); setShowFeedbackInbox(true); }} style=${{
-          background:"none", border:"1px solid "+C.accent, textAlign:"left",
-          borderRadius:10, color:C.accent, fontSize:14, fontWeight:600, padding:"14px 16px", cursor:"pointer",
-          display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
-          <span>Buzón de sugerencias y reportes</span>
-          <span>📥</span>
-        </button>`}
         <button onClick=${e => { e.stopPropagation(); setShowPushToggleConfirm(false); setShowDel(false); setShowSignOut(true); }} style=${{
           background:"none", border:`1px solid ${C.lose}`, textAlign:"left",
           borderRadius:10, color:C.lose, fontSize:14, fontWeight:600, padding:"14px 16px", cursor:"pointer",
@@ -2797,15 +2797,17 @@ function HomeScreen({ user, profile, onSelect, openHidden }) {
       background:"rgba(0,0,0,0.6)", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
       <div onClick=${e=>e.stopPropagation()} style=${{ background:C.card, border:"1px solid #fff", borderRadius:14,
         padding:20, maxWidth:400, width:"100%", display:"flex", flexDirection:"column", gap:14 }}>
-        <div style=${{ color:"#fff", fontWeight:800, fontSize:16 }}>Reportar un problema / Sugerencia</div>
+        <div style=${{ color:"#fff", fontWeight:800, fontSize:16 }}>Reportar un problema / Hacer sugerencia</div>
         <p style=${{ color:"#a1a1aa", fontSize:12.5, lineHeight:1.4, margin:0 }}>
-          Tu mensaje llegará directamente al equipo de PadelRank. ¡Gracias por ayudarnos a mejorar la app!
+          Tu mensaje será enviado directamente al equipo de PadelRank. ¡Gracias por ayudarnos a mejorar la app!
         </p>
         <div style=${{ display:"flex", gap:8 }}>
-          <button onClick=${()=>setFeedbackKind("bug")} style=${{ flex:1, padding:"10px", background:feedbackKind==="bug"?C.lose+"22":"none",
-            border:"1px solid "+C.lose, borderRadius:9, color:C.lose, fontWeight:700, fontSize:13, cursor:"pointer" }}>🐞 Problema</button>
-          <button onClick=${()=>setFeedbackKind("suggestion")} style=${{ flex:1, padding:"10px", background:feedbackKind==="suggestion"?C.win+"22":"none",
-            border:"1px solid "+C.win, borderRadius:9, color:C.win, fontWeight:700, fontSize:13, cursor:"pointer" }}>💡 Sugerencia</button>
+          <button onClick=${()=>setFeedbackKind("bug")} style=${{ flex:1, padding:"10px",
+            background:feedbackKind==="bug"?C.win:"#000", border:"1px solid #fff", borderRadius:9,
+            color:feedbackKind==="bug"?"#000":"#fff", fontWeight:700, fontSize:13, cursor:"pointer" }}>🐞 Problema</button>
+          <button onClick=${()=>setFeedbackKind("suggestion")} style=${{ flex:1, padding:"10px",
+            background:feedbackKind==="suggestion"?C.win:"#000", border:"1px solid #fff", borderRadius:9,
+            color:feedbackKind==="suggestion"?"#000":"#fff", fontWeight:700, fontSize:13, cursor:"pointer" }}>💡 Sugerencia</button>
         </div>
         <textarea value=${feedbackMsg} onChange=${e=>{setFeedbackMsg(e.target.value); setFeedbackErr("");}}
           placeholder=${feedbackKind==="bug" ? "Cuéntanos qué ha fallado, y en qué pantalla..." : "Cuéntanos tu idea..."}
@@ -3202,6 +3204,7 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
   const [showProposeMatch, setShowProposeMatch] = useState(false);
   const [proposeDate, setProposeDate] = useState("");
   const [proposeTime, setProposeTime] = useState("");
+  const [proposeLocation, setProposeLocation] = useState("");
   const [proposalJoins, setProposalJoins] = useState([]);
   const [pins, setPins] = useState([]);
   const [showPinDuration, setShowPinDuration] = useState(null);
@@ -3981,13 +3984,15 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
     const { data, error } = await sb.from("group_chat_messages").insert({
       group_id: group.id, user_id: user.id, message: "Propuesta de partido",
       is_proposal: true, proposal_date: proposeDate, proposal_time: proposeTime,
+      proposal_location: proposeLocation.trim() || null,
     }).select().single();
     if (error) { toast("Error al proponer el partido", "err"); return; }
     setMsgs(prev => prev.some(x=>x.id===data.id) ? prev : [...prev, data]);
     var allMemberIds = (members||[]).map(function(m){return m.id;}).filter(function(id){return id!==user.id;});
+    var locTxt = proposeLocation.trim() ? ` en ${proposeLocation.trim()}` : "";
     sendPush(allMemberIds, "Propuesta de partido",
-      `"${getName(user.id)}" ha propuesto para formar un partido en el chat del grupo "${group.name}" para el "${fmtDDMMYYYY(proposeDate)}" a las "${proposeTime}". ¡Apúntate ya! ✍🏻`, "/");
-    setShowProposeMatch(false); setProposeDate(""); setProposeTime("");
+      `${getName(user.id)} ha propuesto para formar un partido en el chat del grupo ${group.name} para el ${fmtDDMMYYYY(proposeDate)} a las ${proposeTime}${locTxt}. ¡Apúntate ya! ✍🏻`, "/");
+    setShowProposeMatch(false); setProposeDate(""); setProposeTime(""); setProposeLocation("");
   };
 
   const joinedFor = (mid) => proposalJoins.filter(j=>j.message_id===mid);
@@ -4015,11 +4020,12 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
         await sb.from("group_chat_messages").update({ proposal_notified:true }).eq("id", m.id);
         setMsgs(prev => prev.map(x=>x.id===m.id ? Object.assign({},x,{proposal_notified:true}) : x));
         var formedUids = joinsNow.slice(0,4).map(function(j){return j.user_id;});
+        var locTxt2 = m.proposal_location ? ` en ${m.proposal_location}` : "";
         formedUids.filter(function(uid){ return uid!==user.id; }).forEach(function(uid){
           var others = formedUids.filter(function(x){return x!==uid;}).map(function(x){return getName(x);});
-          var othersStr = others.length<=1 ? `"${others[0]||""}"` : `"${others.slice(0,-1).join('", "')}" y "${others[others.length-1]}"`;
+          var othersStr = others.length<=1 ? (others[0]||"") : (others.slice(0,-1).join(", ")+" y "+others[others.length-1]);
           sendPush(uid, "Partido formado",
-            `Se ha formado un partido para el "${fmtDDMMYYYY(m.proposal_date)}" a las "${m.proposal_time}". Los demás jugadores apuntados son: ${othersStr}. ¡Suerte para el partido! 💪🏻`, "/");
+            `Se ha formado un partido en el chat del grupo de ${group.name} para el ${fmtDDMMYYYY(m.proposal_date)} a las ${m.proposal_time}${locTxt2}. Los demás jugadores apuntados son: ${othersStr}. ¡Suerte para el partido! 💪🏻`, "/");
         });
       }
     }
@@ -4560,6 +4566,9 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
                         <div style=${{ fontSize:15, fontWeight:800, color:C.text, marginBottom:8 }}>
                           📅 ${fmtDDMMYYYY(m.proposal_date)} · 🕒 ${m.proposal_time}
                         </div>
+                        ${m.proposal_location && html`<div style=${{ fontSize:13, fontWeight:700, color:C.text, marginTop:-4, marginBottom:8 }}>
+                          📍 ${m.proposal_location}
+                        </div>`}
                         <div style=${{ fontSize:12, color:"#fff", marginBottom:8, lineHeight:1.6 }}>
                           <strong style=${{ color:C.text }}>${joinedFor(m.id).length}/4</strong> apuntados${joinedFor(m.id).length ? ": "+joinedFor(m.id).map(function(j){return getName(j.user_id);}).join(", ") : ""}
                         </div>
@@ -5031,6 +5040,13 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
             })()}
           </div>
         </div>
+        <div>
+          <div style=${{ fontSize:11, color:"#fff", marginBottom:4 }}>Lugar:</div>
+          <input type="text" value=${proposeLocation} onChange=${e=>setProposeLocation(e.target.value)}
+            placeholder="Ej. Club de pádel San Adrián, pista 3"
+            style=${{ width:"100%", padding:"10px 12px", background:C.card2, border:"1px solid #fff",
+              borderRadius:10, color:"#fff", fontSize:14, outline:"none", boxSizing:"border-box" }} />
+        </div>
         <${Btn} onClick=${sendProposal} disabled=${!proposeDate||!proposeTime} sx=${{ width:"100%" }}>
           Enviar propuesta
         <//>
@@ -5453,7 +5469,7 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
       notifyGroupActivity(allMemberIds, "tournament_created",
         getName(user.id)+" ha creado un torneo de "+FORMAT_LABELS[tFormat]+": \""+tName.trim()+"\".");
       sendPush(allMemberIds, "Nuevo torneo creado",
-        `"${getName(user.id)}" (Administrador del grupo) ha creado un nuevo torneo en el grupo "${group.name}". ¡Apúntate y a por todas!`, "/");
+        `${getName(user.id)} (Administrador del grupo) ha creado un nuevo torneo en el grupo ${group.name}. ¡Apúntate y a por todas!`, "/");
       if (tAdminId && tAdminId!==user.id) {
         notifyGroupActivity([tAdminId], "tournament_admin_assigned",
           getName(user.id)+" te ha nombrado Administrador del torneo \""+tName.trim()+"\".");
@@ -5490,7 +5506,7 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
     notifyGroupActivity([targetId], "tournament_partner_request",
       getName(user.id)+" te ha propuesto ser tu pareja para el torneo \""+t.name+"\".");
     sendPush(targetId, "Propuesta de pareja",
-      `"${getName(user.id)}" te ha propuesto jugar juntos el torneo "${t.name}" del grupo "${group.name}". ¡Decide y dale una respuesta! 👥`, "/");
+      `${getName(user.id)} te ha propuesto jugar juntos el torneo ${t.name} del grupo ${group.name}. ¡Decide y dale una respuesta! 👥`, "/");
     setShowPairFor(null);
   };
 
@@ -5510,7 +5526,7 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
       notifyGroupActivity([req.requester_id], "tournament_partner_response",
         getName(user.id)+" ha aceptado tu propuesta de pareja para el torneo \""+reqTName+"\".");
       sendPush(req.requester_id, "Pareja apuntada al torneo",
-        `"${getName(user.id)}" ha aceptado tu propuesta para jugar como pareja en el torneo "${reqTName}" del grupo "${group.name}". Por tanto, ya estáis apuntados al torneo ✍🏻`, "/");
+        `${getName(user.id)} ha aceptado tu propuesta para jugar como pareja en el torneo ${reqTName} del grupo ${group.name}. Por tanto, ya estáis apuntados al torneo ✍🏻`, "/");
 
       // Si alguien más había propuesto pareja a cualquiera de los dos y se ha quedado sin respuesta
       // (porque uno de ellos ha aceptado formar pareja con otra persona), le avisamos.
@@ -5523,7 +5539,7 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
         var targetName = s.target_id===user.id ? getName(user.id) : getName(req.requester_id);
         var newPartnerName = s.target_id===user.id ? getName(req.requester_id) : getName(user.id);
         sendPush(s.requester_id, "Propuesta de pareja no respondida",
-          `"${targetName}", a quien habías propuesto jugar como pareja el torneo "${reqTName}" del grupo "${group.name}", se ha apuntado al torneo con "${newPartnerName}". ¡Busca otra pareja y apúntate al torneo!`, "/");
+          `${targetName}, a quien habías propuesto jugar como pareja el torneo ${reqTName} del grupo ${group.name}, se ha apuntado al torneo con ${newPartnerName}. ¡Busca otra pareja y apúntate al torneo!`, "/");
         await sb.from("tournament_partner_requests").delete().eq("id", s.id);
       }
     } else {
@@ -5531,7 +5547,7 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
       notifyGroupActivity([req.requester_id], "tournament_partner_response",
         getName(user.id)+" ha rechazado tu propuesta de pareja para el torneo \""+reqTName+"\".");
       sendPush(req.requester_id, "Propuesta de pareja rechazada",
-        `"${getName(user.id)}" ha rechazado tu propuesta para jugar como pareja en el torneo "${reqTName}" del grupo "${group.name}". ¡Busca otra pareja y apúntate al torneo!`, "/");
+        `${getName(user.id)} ha rechazado tu propuesta para jugar como pareja en el torneo ${reqTName} del grupo ${group.name}. ¡Busca otra pareja y apúntate al torneo!`, "/");
     }
   };
 
@@ -5545,7 +5561,7 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
       notifyGroupActivity([partnerId], "tournament_partner_dissolved",
         getName(user.id)+" ha disuelto la pareja que habíais formado para el torneo \""+t.name+"\". Ahora mismo no tienes pareja para este torneo.");
       sendPush(partnerId, "Disolución de pareja",
-        `"${getName(user.id)}" ha decidido disolver la pareja que habíais formado para el torneo "${t.name}" del grupo "${group.name}", por lo que ahora mismo no estás apuntado al torneo. 💔`, "/");
+        `${getName(user.id)} ha decidido disolver la pareja que habíais formado para el torneo ${t.name} del grupo ${group.name}, por lo que ahora mismo no estás apuntado al torneo. 💔`, "/");
     }
     setShowUnpairConfirm(null);
   };
@@ -5714,7 +5730,7 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
     setOpenTournament(function(prev){ return prev && prev.id===t.id ? Object.assign({},prev,{tstatus:"in_progress",started_at:startedAtNow}) : prev; });
     var registeredIds = pairs.reduce(function(acc,p){ return acc.concat(p); }, []);
     sendPush(registeredIds, "Torneo comenzado",
-      `"${getName(user.id)}" (Administrador del torneo) ha dado comienzo al torneo "${t.name}" del grupo "${group.name}". ¡Suerte y a dar el máximo!`, "/");
+      `${getName(user.id)} (Administrador del torneo) ha dado comienzo al torneo ${t.name} del grupo ${group.name}. ¡Suerte y a dar el máximo!`, "/");
     setBusy(false);
     if (!silent) toast("Torneo comenzado 🏆");
   };
@@ -5879,7 +5895,7 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
     }
     var allMemberIds = (members||[]).map(function(m){return m.id;});
     sendPush(allMemberIds, "Cambio de Admin del torneo",
-      `"${getName(user.id)}" (Admin del torneo "${t.name}") ha cedido el puesto de Admin del torneo a "${getName(newAdminId)}". 🔄`, "/");
+      `${getName(user.id)} (Admin del torneo ${t.name}) ha cedido el puesto de Admin del torneo a ${getName(newAdminId)}. 🔄`, "/");
   };
 
   const getChampionPairs = (t) => {
@@ -5924,7 +5940,7 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
     var championPairs = getChampionPairs(t);
     var championIds = championPairs.reduce(function(acc,p){return acc.concat(p);}, []);
     var otherIds = participantIds.filter(function(id){ return championIds.indexOf(id)===-1; });
-    var baseMsg = `"${getName(user.id)}" (Administrador del torneo) ha dado por finalizado el torneo "${t.name}" del grupo "${group.name}".`;
+    var baseMsg = `${getName(user.id)} (Administrador del torneo) ha dado por finalizado el torneo ${t.name} del grupo ${group.name}.`;
     if (championIds.length) sendPush(championIds, "Torneo finalizado", baseMsg+" ¡Enhorabuena por el campeonato! 🥇💪🏻", "/");
     if (otherIds.length) sendPush(otherIds, "Torneo finalizado", baseMsg+" ¡A seguir! 💪🏻", "/");
     setBusy(false);
@@ -7548,7 +7564,7 @@ function GroupScreen({ group, user, profile, onBack }) {
     toast("✓ Notificación enviada. Registro pendiente de aprobación.");
     const otherPlayers = [...pair1, ...pair2].filter(uid => uid !== user.id);
     sendPush(otherPlayers, "Nuevo partido por aprobar",
-      `"${profile.name}" ha añadido un partido en el grupo "${group.name}". Necesita tu aprobación.`, "/");
+      `${profile.name} ha añadido un partido en el grupo ${group.name}. Necesita tu aprobación.`, "/");
     await loadData();
   };
 
@@ -7598,7 +7614,7 @@ function GroupScreen({ group, user, profile, onBack }) {
     await notifyOthers("name_changed", profile.name+' ha cambiado el nombre del grupo de "'+oldName+'" a "'+nm+'"');
     var allMemberIds = (members||[]).map(function(m){return m.id;});
     sendPush(allMemberIds, "Cambio de Nombre del grupo",
-      `"${profile.name}" (Administrador del grupo) ha cambiado el nombre del grupo "${oldName}" a "${nm}". 🔄`, "/");
+      `${profile.name} (Administrador del grupo) ha cambiado el nombre del grupo ${oldName} a ${nm}. 🔄`, "/");
     setEditingGroupName(false);
   };
 
@@ -7615,7 +7631,7 @@ function GroupScreen({ group, user, profile, onBack }) {
     await notifyOthers("admin_changed", profile.name+" ha elegido a "+changeTarget.name+" como nuevo Administrador del grupo");
     var allMemberIds = (members||[]).map(function(m){return m.id;});
     sendPush(allMemberIds, "Cambio de Admin del grupo",
-      `"${profile.name}" (Admin del grupo "${group.name}") ha cedido el puesto de Admin del grupo a "${changeTarget.name}". 🔄`, "/");
+      `${profile.name} (Admin del grupo ${group.name}) ha cedido el puesto de Admin del grupo a ${changeTarget.name}. 🔄`, "/");
     setChangeTarget(null); setAdminMenuStage(0);
     await loadData();
   };
@@ -8697,7 +8713,7 @@ function RankingTab({ groupId, ranked, allMatches, members, isAdmin, user, onPla
     var gres = await sb.from("groups").select("name").eq("id", groupId).maybeSingle();
     var gname = (gres.data && gres.data.name) || "?";
     sendPush(removedUser.id, "Eliminación de un grupo",
-      `"${adminName}" (Administrador del grupo) te ha eliminado del grupo "${gname}".`, "/");
+      `${adminName} (Administrador del grupo) te ha eliminado del grupo ${gname}.`, "/");
     setRemoveConfirmFor(null); setRemoveConfirmText("");
   };
 
