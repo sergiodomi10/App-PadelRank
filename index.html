@@ -2804,13 +2804,13 @@ function HomeScreen({ user, profile, onSelect, openHidden }) {
         <div style=${{ display:"flex", gap:8 }}>
           <button onClick=${()=>setFeedbackKind("bug")} style=${{ flex:1, padding:"10px",
             background:feedbackKind==="bug"?C.win:"#000", border:"1px solid #fff", borderRadius:9,
-            color:feedbackKind==="bug"?"#000":"#fff", fontWeight:700, fontSize:13, cursor:"pointer" }}>🐞 Problema</button>
+            color:feedbackKind==="bug"?"#000":"#fff", fontWeight:700, fontSize:13, cursor:"pointer" }}>🆘 Problema</button>
           <button onClick=${()=>setFeedbackKind("suggestion")} style=${{ flex:1, padding:"10px",
             background:feedbackKind==="suggestion"?C.win:"#000", border:"1px solid #fff", borderRadius:9,
             color:feedbackKind==="suggestion"?"#000":"#fff", fontWeight:700, fontSize:13, cursor:"pointer" }}>💡 Sugerencia</button>
         </div>
         <textarea value=${feedbackMsg} onChange=${e=>{setFeedbackMsg(e.target.value); setFeedbackErr("");}}
-          placeholder=${feedbackKind==="bug" ? "Cuéntanos qué ha fallado, y en qué pantalla..." : "Cuéntanos tu idea..."}
+          placeholder=${feedbackKind==="bug" ? "Cuéntanos qué problema tienes, dónde te aparece, etc. Lo miraremos y lo trataremos de solucionar." : "Cuéntanos tu sugerencia/idea. Cualquier sugerencia/idea es bienvenida para tenerla en cuenta y que podamos seguir mejorando la app."}
           rows=${5} style=${{ width:"100%", padding:"10px 12px", background:C.card2, border:"1px solid #fff",
             borderRadius:10, color:"#fff", fontSize:14, outline:"none", boxSizing:"border-box", resize:"vertical", fontFamily:"inherit" }}></textarea>
         ${feedbackErr && html`<div style=${{ color:C.lose, fontSize:12.5 }}>${feedbackErr}</div>`}
@@ -5043,7 +5043,7 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
         <div>
           <div style=${{ fontSize:11, color:"#fff", marginBottom:4 }}>Lugar:</div>
           <input type="text" value=${proposeLocation} onChange=${e=>setProposeLocation(e.target.value)}
-            placeholder="Ej. Club de pádel San Adrián, pista 3"
+            placeholder="Ej: Complejo Deportivo de ..., pista 3"
             style=${{ width:"100%", padding:"10px 12px", background:C.card2, border:"1px solid #fff",
               borderRadius:10, color:"#fff", fontSize:14, outline:"none", boxSizing:"border-box" }} />
         </div>
