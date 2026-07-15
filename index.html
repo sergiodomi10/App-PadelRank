@@ -4459,8 +4459,11 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
         </div>`}
       </div>
     </header>
-    ${notAdminMsg && html`<div style=${{ color:C.lose, fontSize:12.5, fontWeight:700,
-      textAlign:"center", padding:"8px 16px 0", flexShrink:0 }}>Únicamente el Administrador del grupo puede realizar esta acción</div>`}
+    ${notAdminMsg && html`<div style=${{ position:"fixed", left:0, right:0, top:"40%", zIndex:9999,
+      display:"flex", justifyContent:"center", pointerEvents:"none", padding:"0 24px" }}>
+      <div style=${{ color:C.lose, fontSize:14, fontWeight:800, textAlign:"center",
+        textShadow:"0 2px 8px rgba(0,0,0,0.9)" }}>Únicamente el Administrador del grupo puede realizar esta acción</div>
+    </div>`}
 
     ${pins.length>0 && html`<div style=${{ borderBottom:"1px solid "+C.border, flexShrink:0, position:"relative", zIndex:2, background:C.bg }}>
       ${pins.map(function(p, pi){
@@ -9405,15 +9408,17 @@ function HistoryTab({ history, getName, group, user, members, isAdmin }) {
   };
 
   const DeleteBar = html`<div style=${{ marginBottom:14 }}>
-    ${(!pendingDeletion && delState!=="ok") && html`<div style=${{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6 }}>
+    ${(!pendingDeletion && delState!=="ok") && html`<div style=${{ display:"flex", justifyContent:"flex-end" }}>
       <button onClick=${()=>{ if(!isAdmin){ setNotAdminMsg(true); setTimeout(()=>setNotAdminMsg(false), 2500); return; } setDelOpen(true); setDelText(""); setDelState(null); }}
         style=${{ background:"none", border:"1px solid "+C.lose+"55", borderRadius:10,
           padding:"8px 14px", color:C.lose, fontWeight:700, fontSize:12, cursor:"pointer" }}>
         Eliminar historial completo
       </button>
-      ${notAdminMsg && html`<div style=${{ color:C.lose, fontSize:12, fontWeight:700, textAlign:"center", width:"100%" }}>
-        Únicamente el Administrador del grupo puede realizar esta acción
-      </div>`}
+    </div>`}
+    ${notAdminMsg && html`<div style=${{ position:"fixed", left:0, right:0, top:"40%", zIndex:9999,
+      display:"flex", justifyContent:"center", pointerEvents:"none", padding:"0 24px" }}>
+      <div style=${{ color:C.lose, fontSize:14, fontWeight:800, textAlign:"center",
+        textShadow:"0 2px 8px rgba(0,0,0,0.9)" }}>Únicamente el Administrador del grupo puede realizar esta acción</div>
     </div>`}
 
     ${delState==="ok" && html`<div style=${{ marginTop:10, background:C.card, border:"1px solid "+C.border,
