@@ -3427,6 +3427,7 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
   const [pendingChatDel, setPendingChatDel] = useState(null);
   const [chatDelVotes, setChatDelVotes] = useState([]);
   const [showChatDelConfirm, setShowChatDelConfirm] = useState(false);
+  const [notAdminMsg, setNotAdminMsg] = useState(false);
   const [chatDelText, setChatDelText] = useState("");
   const [chatDelState, setChatDelState] = useState(null);
   const [chatDelInfo, setChatDelInfo] = useState(false);
@@ -4208,7 +4209,7 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
               ⚙️ Ajustes del chat
             </button>
             ${!pendingChatDel
-              ? html`<button onClick=${()=>{ setSettingsStage(0); if(!isAdmin){ toast("Únicamente el Administrador del grupo puede realizar esta acción", "ok", C.lose); return; } setShowChatDelConfirm(true); setChatDelText(""); setChatDelState(null); }} style=${{
+              ? html`<button onClick=${()=>{ setSettingsStage(0); if(!isAdmin){ setNotAdminMsg(true); setTimeout(()=>setNotAdminMsg(false), 2500); return; } setShowChatDelConfirm(true); setChatDelText(""); setChatDelState(null); }} style=${{
                   display:"block", width:"100%", padding:"12px 14px", background:"none",
                   border:"none", color:C.lose, fontSize:13, textAlign:"left", cursor:"pointer" }}>
                   🗑️ Eliminar mensajes del chat
@@ -4458,6 +4459,8 @@ function GroupChatScreen({ group, user, members, isAdmin, onClose }) {
         </div>`}
       </div>
     </header>
+    ${notAdminMsg && html`<div style=${{ color:C.lose, fontSize:12.5, fontWeight:700,
+      textAlign:"center", padding:"8px 16px 0", flexShrink:0 }}>Únicamente el Administrador del grupo puede realizar esta acción</div>`}
 
     ${pins.length>0 && html`<div style=${{ borderBottom:"1px solid "+C.border, flexShrink:0, position:"relative", zIndex:2, background:C.bg }}>
       ${pins.map(function(p, pi){
@@ -9327,6 +9330,7 @@ function HistoryTab({ history, getName, group, user, members, isAdmin }) {
   const [pendingDeletion, setPendingDeletion] = useState(null);
   const [deletionVotes,   setDeletionVotes]   = useState([]);
   const [showVoteLog,     setShowVoteLog]     = useState(false);
+  const [notAdminMsg,     setNotAdminMsg]     = useState(false);
   const [filterMode, setFilterMode] = useState("all");
   const [fromDate,   setFromDate]   = useState("");
   const [toDate,     setToDate]     = useState("");
@@ -9401,12 +9405,15 @@ function HistoryTab({ history, getName, group, user, members, isAdmin }) {
   };
 
   const DeleteBar = html`<div style=${{ marginBottom:14 }}>
-    ${(!pendingDeletion && delState!=="ok") && html`<div style=${{ display:"flex", justifyContent:"flex-end" }}>
-      <button onClick=${()=>{ if(!isAdmin){ toast("Únicamente el Administrador del grupo puede realizar esta acción", "ok", C.lose); return; } setDelOpen(true); setDelText(""); setDelState(null); }}
+    ${(!pendingDeletion && delState!=="ok") && html`<div style=${{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6 }}>
+      <button onClick=${()=>{ if(!isAdmin){ setNotAdminMsg(true); setTimeout(()=>setNotAdminMsg(false), 2500); return; } setDelOpen(true); setDelText(""); setDelState(null); }}
         style=${{ background:"none", border:"1px solid "+C.lose+"55", borderRadius:10,
           padding:"8px 14px", color:C.lose, fontWeight:700, fontSize:12, cursor:"pointer" }}>
         Eliminar historial completo
       </button>
+      ${notAdminMsg && html`<div style=${{ color:C.lose, fontSize:12, fontWeight:700, textAlign:"center", width:"100%" }}>
+        Únicamente el Administrador del grupo puede realizar esta acción
+      </div>`}
     </div>`}
 
     ${delState==="ok" && html`<div style=${{ marginTop:10, background:C.card, border:"1px solid "+C.border,
