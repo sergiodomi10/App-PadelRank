@@ -619,8 +619,8 @@ function AuthScreen({ onDone }) {
 
   const submit = async () => {
     if (mode==="register" && !name.trim()) { setErr("Escribe tu nombre y apellido"); return; }
-    if (mode==="register" && !/^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+ [A-ZÁÉÍÓÚÑ][a-záéíóúñ]+$/.test(name.trim())) {
-      setErr('El nombre debe ser "Nombre Apellido": dos palabras, cada una empezando por mayúscula seguida de minúsculas.');
+    if (mode==="register" && !/^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+ [A-ZÁÉÍÓÚÑ][a-záéíóúñ]+( [A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?$/.test(name.trim())) {
+      setErr('El nombre debe ser "Nombre Apellido" o "Nombre Nombre Apellido": cada palabra empezando por mayúscula seguida de minúsculas.');
       return;
     }
     if (!usuario.trim() || !pass) { setErr("Rellena todos los campos"); return; }
@@ -785,9 +785,9 @@ function AuthScreen({ onDone }) {
               style=${{ background:"#1e3a5f", border:"1px solid #3b82f6", position:"relative", zIndex:91,
               borderRadius:8, padding:"10px 12px", fontSize:12, color:"#fff", lineHeight:1.6 }}>
               Son el nombre y el apellido que tendrás dentro de la app. Deben cumplir este formato:<br/>
-              -Ser dos palabras consecutivas.<br/>
+              -Ser dos o tres palabras consecutivas.<br/>
               -Tanto el nombre como el apellido, comenzar por una única mayúscula, seguida de una o más minúsculas.<br/>
-              Es decir, este formato: "Nombre Apellido".
+              Es decir, uno de estos dos formatos: "Nombre Apellido" o "Nombre Nombre Apellido".
             </div>`}
             <${Inp} type="text" placeholder="Tu nombre y apellido" value=${name}
               style=${{ border:"1px solid #fff" }}
