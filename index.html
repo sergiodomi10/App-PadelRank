@@ -1680,6 +1680,12 @@ function NotificationsPanel({ user, onClose, onCountChange }) {
         <div style=${{ fontSize:40 }}>✅</div>
         <p style=${{ color:C.text, marginTop:12 }}>No tienes notificaciones pendientes</p>
       </div>`}
+      ${notifs.length>0 && html`<div style=${{ display:"flex", alignItems:"flex-start", gap:8, marginBottom:14 }}>
+        <span style=${{ width:14, height:14, borderRadius:"50%", background:"#2563eb",
+          color:"#fff", fontSize:9, fontWeight:800, display:"flex", alignItems:"center",
+          justifyContent:"center", flexShrink:0, marginTop:2 }}>i</span>
+        <span style=${{ color:"#fff", fontSize:12.5, lineHeight:1.4 }}>Cada notificación se puede eliminar deslizándola hacia la izquierda o hacia la derecha de la pantalla.</span>
+      </div>`}
 
       ${notifs.map(function(n) {
         if (n.kind === "history") {
