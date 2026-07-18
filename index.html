@@ -6310,7 +6310,9 @@ function TorneosScreen({ group, user, members, isAdmin, onClose }) {
               emptySlots = emptySlots||0;
               if (!rows.length && !emptySlots) return html``;
               var showChampAnim = t.tstatus==="finished" && stageFilter==="liga";
-              var highlightCount = stageFilter==="grupos" ? (t.grupos_qualifiers_per_group||1) : 1;
+              var highlightCount = stageFilter==="grupos" ? (t.grupos_qualifiers_per_group||1)
+                : (stageFilter==="liga" && t.format==="liga_elim") ? (t.liga_elim_qualifiers||4)
+                : 1;
               return html`<div class="bracket-scroll" style=${{ background:C.card2, borderRadius:10, overflow:"auto", marginBottom:10, border:"1px solid #fff" }}>
                 <div style=${{ display:"flex", padding:"6px 10px", fontSize:10, color:"#fff", borderBottom:"1px solid #fff", minWidth:420 }}>
                   <div style=${{ width:26 }}>#</div>
